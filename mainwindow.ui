@@ -1,0 +1,547 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>846</width>
+    <height>503</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>600</width>
+    <height>400</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Ignored" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="tabImage">
+       <attribute name="title">
+        <string>Image</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout">
+        <item row="0" column="0">
+         <widget class="ImagePlot" name="imagePlot" native="true">
+          <property name="minimumSize">
+           <size>
+            <width>128</width>
+            <height>128</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="ImagePlot" name="fftPlot" native="true">
+          <property name="minimumSize">
+           <size>
+            <width>128</width>
+            <height>128</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabStrain">
+       <attribute name="title">
+        <string>Strain</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_2">
+        <item row="0" column="0">
+         <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,1">
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,0,0,0,0,0,0,4">
+            <item>
+             <widget class="QComboBox" name="colourMapBox">
+              <property name="minimumSize">
+               <size>
+                <width>150</width>
+                <height>0</height>
+               </size>
+              </property>
+              <item>
+               <property name="text">
+                <string>Greyscale</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Jet like</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Thermal</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Polar</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>BlOr</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_2">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeType">
+               <enum>QSizePolicy::Fixed</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>10</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QLabel" name="label1">
+              <property name="text">
+               <string>Limits:</string>
+              </property>
+              <property name="margin">
+               <number>0</number>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QDoubleSpinBox" name="limitsSpin">
+              <property name="minimumSize">
+               <size>
+                <width>100</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="decimals">
+               <number>3</number>
+              </property>
+              <property name="minimum">
+               <double>0.001000000000000</double>
+              </property>
+              <property name="maximum">
+               <double>100.000000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>0.010000000000000</double>
+              </property>
+              <property name="value">
+               <double>0.200000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_3">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeType">
+               <enum>QSizePolicy::Fixed</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>10</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QLabel" name="label2">
+              <property name="text">
+               <string>Rotation:</string>
+              </property>
+              <property name="margin">
+               <number>0</number>
+              </property>
+              <property name="indent">
+               <number>-1</number>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QDoubleSpinBox" name="angleSpin">
+              <property name="minimumSize">
+               <size>
+                <width>100</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="minimum">
+               <double>-360.000000000000000</double>
+              </property>
+              <property name="maximum">
+               <double>360.000000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>0.100000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QGridLayout" name="gridLayout_3" columnstretch="200,200,1">
+            <item row="0" column="0">
+             <widget class="ImagePlot" name="exxPlot" native="true"/>
+            </item>
+            <item row="1" column="0">
+             <widget class="ImagePlot" name="eyxPlot" native="true"/>
+            </item>
+            <item row="0" column="1">
+             <widget class="ImagePlot" name="exyPlot" native="true"/>
+            </item>
+            <item row="0" column="2">
+             <widget class="ColorBarPlot" name="colorBar" native="true">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>70</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>16777215</height>
+               </size>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="ImagePlot" name="eyyPlot" native="true"/>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabOther">
+       <attribute name="title">
+        <string>Other</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_4">
+        <item row="1" column="0">
+         <widget class="ImagePlot" name="leftOtherPlot" native="true"/>
+        </item>
+        <item row="1" column="1">
+         <widget class="ImagePlot" name="rightOtherPlot" native="true"/>
+        </item>
+        <item row="0" column="0">
+         <widget class="QComboBox" name="leftCombo">
+          <property name="currentText">
+           <string/>
+          </property>
+          <property name="currentIndex">
+           <number>-1</number>
+          </property>
+          <item>
+           <property name="text">
+            <string>Mask</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Masked FFT</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Bragg image</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Raw phase</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Phase</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Normalised phase</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>dPhase/dx</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>dPhase/dy</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QComboBox" name="rightCombo">
+          <property name="currentIndex">
+           <number>-1</number>
+          </property>
+          <item>
+           <property name="text">
+            <string>Mask</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Masked FFT</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Bragg image</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Raw phase</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Phase</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Normalised phase</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>dPhase/dx</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>dPhase/dy</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>846</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <widget class="QMenu" name="menuExport">
+     <property name="title">
+      <string>Export</string>
+     </property>
+     <widget class="QMenu" name="menuExportStrains">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="title">
+       <string>Strains</string>
+      </property>
+      <addaction name="actionExportStrainsIm"/>
+      <addaction name="actionExportStrainsDat"/>
+      <addaction name="actionExportStrainsBin"/>
+     </widget>
+     <widget class="QMenu" name="menuExportAll">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="title">
+       <string>All</string>
+      </property>
+      <addaction name="actionExportAllIm"/>
+      <addaction name="actionExportAllDat"/>
+      <addaction name="actionExportAllBin"/>
+     </widget>
+     <addaction name="menuExportStrains"/>
+     <addaction name="menuExportAll"/>
+    </widget>
+    <addaction name="actionOpen"/>
+    <addaction name="menuExport"/>
+   </widget>
+   <widget class="QMenu" name="menuStrain">
+    <property name="title">
+     <string>Strain</string>
+    </property>
+    <addaction name="actionGPA"/>
+   </widget>
+   <widget class="QMenu" name="menuWindow">
+    <property name="title">
+     <string>Window</string>
+    </property>
+    <addaction name="actionHann"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuStrain"/>
+   <addaction name="menuWindow"/>
+  </widget>
+  <widget class="QStatusBar" name="statusBar">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+  </widget>
+  <action name="actionOpen">
+   <property name="text">
+    <string>Open...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
+   </property>
+  </action>
+  <action name="actionGPA">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>GPA</string>
+   </property>
+  </action>
+  <action name="actionHann">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Hann</string>
+   </property>
+  </action>
+  <action name="actionExportStrainsIm2">
+   <property name="text">
+    <string>Image</string>
+   </property>
+  </action>
+  <action name="actionExportStrainsDat2">
+   <property name="text">
+    <string>Data</string>
+   </property>
+  </action>
+  <action name="actionExportStrainsBin2">
+   <property name="text">
+    <string>Binary</string>
+   </property>
+  </action>
+  <action name="actionExportAllIm2">
+   <property name="text">
+    <string>Image</string>
+   </property>
+  </action>
+  <action name="actionExportAllDat2">
+   <property name="text">
+    <string>Data</string>
+   </property>
+  </action>
+  <action name="actionExportAllBin2">
+   <property name="text">
+    <string>Binary</string>
+   </property>
+  </action>
+  <action name="actionExportStrainsIm">
+   <property name="text">
+    <string>RGB image</string>
+   </property>
+  </action>
+  <action name="actionExportStrainsDat">
+   <property name="text">
+    <string>Data image</string>
+   </property>
+  </action>
+  <action name="actionExportStrainsBin">
+   <property name="text">
+    <string>Binary</string>
+   </property>
+  </action>
+  <action name="actionExportAllIm">
+   <property name="text">
+    <string>RGB image</string>
+   </property>
+  </action>
+  <action name="actionExportAllDat">
+   <property name="text">
+    <string>Data image</string>
+   </property>
+  </action>
+  <action name="actionExportAllBin">
+   <property name="text">
+    <string>Binary</string>
+   </property>
+  </action>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>ImagePlot</class>
+   <extends>QWidget</extends>
+   <header>imageplot.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>ColorBarPlot</class>
+   <extends>QWidget</extends>
+   <header>colorbarplot.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>
