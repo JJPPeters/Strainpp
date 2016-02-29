@@ -1,23 +1,33 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#ifndef EIGEN_DEFAULT_TO_ROW_MAJOR
+#define EIGEN_DEFAULT_TO_ROW_MAJOR
+#endif
+
 #include <memory>
 #include <cmath>
 #include "fftw3.h"
 
-#include "matrix.h"
+#include <Eigen/Dense>
 
 #ifndef PI_H
 #define PI_H
 const double PI = 3.14159265358979323846;
 #endif
 
+namespace Eigen
+{
+template <typename T>
+using MatrixXT = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>;
+}
+
 namespace UtilsFFT {
 
     template <typename T>
-    static Matrix<T> preFFTShift(Matrix<T> &input)
+    static Eigen::MatrixXT<T> preFFTShift(Eigen::MatrixXT<T> &input)
     {
-        Matrix<T> output(input.rows(), input.cols());
+        Eigen::MatrixXT<T> output(input.rows(), input.cols());
 
         for(int j = 0; j < input.rows(); ++j)
             for(int i =0; i < input.cols(); ++i)
@@ -26,12 +36,19 @@ namespace UtilsFFT {
         return output;
     }
 
-    static void doFFTPlan(const std::shared_ptr<fftw_plan> plan, Matrix<std::complex<double> > in, Matrix<std::complex<double> >& out)
+    static void doFFTPlan(const std::shared_ptr<fftw_plan> plan, Eigen::MatrixXcd in, Eigen::MatrixXcd& out)
     {
+        std::vector<std::complex<double>> buffer_in(in.size());
+        std::vector<std::complex<double>> buffer_out(in.size());
+
+        Eigen::Map<Eigen::MatrixXcd>(&buffer_in[0], in.rows(), in.cols()) = in;
+
         if (plan.get() != NULL)
-            fftw_execute_dft((*plan), reinterpret_cast<fftw_complex*>(in.getPointer(0)), reinterpret_cast<fftw_complex*>(out.getPointer(0)));
+            fftw_execute_dft((*plan), reinterpret_cast<fftw_complex*>(&buffer_in[0]), reinterpret_cast<fftw_complex*>(&buffer_out[0]));
         else
             return; //error throw?
+
+        out = Eigen::Map<Eigen::MatrixXcd>(&buffer_out[0], in.rows(), in.cols());
     }
 
 }
@@ -49,9 +66,9 @@ namespace UtilsMaths {
     }
 
     template <typename T>
-    static Matrix<T> HannWindow(const Matrix<T> &input)
+    static Eigen::MatrixXT<T> HannWindow(const Eigen::MatrixXT<T> &input)
     {
-        Matrix<T> output(input.rows(), input.cols());
+        Eigen::MatrixXT<T> output(input.rows(), input.cols());
 
         std::vector<double> hann_y(input.rows());
         std::vector<double> hann_x(input.cols());
@@ -69,26 +86,6 @@ namespace UtilsMaths {
         return output;
     }
 }
-
-
-//void GPA::getLocalMaxima(const Matrix<double> &im, int &x, int &y, int r)
-//{
-//    // find values higher than
-
-//    double max = std::numeric_limits<double>::max();
-//    int xt = x;
-//    int yt = y;
-//    for (int j = yt-r ; j <= yt+r; ++j)
-//        for (int i = xt-r ; i <= xt+r; ++i)
-//        {
-//            if(im(j, i) > max)
-//            {
-//                max = im(j, i);
-//                x = i;
-//                y = j;
-//            }
-//        }
-//}
 
 #endif // UTILS_H
 

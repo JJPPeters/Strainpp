@@ -1,6 +1,10 @@
 #ifndef IMAGEPLOT
 #define IMAGEPLOT
 
+#ifndef EIGEN_DEFAULT_TO_ROW_MAJOR
+#define EIGEN_DEFAULT_TO_ROW_MAJOR
+#endif
+
 #include <complex>
 #include <memory>
 #include <cmath>
@@ -9,7 +13,7 @@
 #include "tiffio.h"
 
 #include "exceptions.h"
-#include "matrix.h"
+#include <Eigen/Dense>
 
 #include <iostream>
 #include <fstream>
@@ -59,14 +63,19 @@ public:
     }
 
 
-    void SetImage(const Matrix<double>& image, bool doReplot = true)
+    void SetImage(const Eigen::MatrixXd& image, bool doReplot = true)
     {
-        SetImage(image.getData(), image.cols(), image.rows(), doReplot);
+        std::vector<double> buffer(image.size());
+        Eigen::Map<Eigen::MatrixXd>(&buffer[0], image.rows(), image.cols()) = image;
+        SetImage(buffer, image.cols(), image.rows(), doReplot);
     }
 
-    void SetImage(const Matrix<std::complex<double>>& image, ShowComplex show, bool doReplot = true)
+    void SetImage(const Eigen::MatrixXcd& image, ShowComplex show, bool doReplot = true)
     {
-        SetImage(image.getData(), image.cols(), image.rows(), show, doReplot);
+        std::vector<std::complex<double>> buffer(image.size());
+        Eigen::Map<Eigen::MatrixXcd>(&buffer[0], image.rows(), image.cols()) = image;
+
+        SetImage(buffer, image.cols(), image.rows(), show, doReplot);
     }
 
     void SetImage(const std::vector<double>& image, const int sx, const int sy, bool doReplot = true)

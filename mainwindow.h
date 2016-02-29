@@ -1,6 +1,10 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#ifndef EIGEN_DEFAULT_TO_ROW_MAJOR
+#define EIGEN_DEFAULT_TO_ROW_MAJOR
+#endif
+
 #include <QMainWindow>
 #include <complex>
 #include <QtWidgets/QLabel>
@@ -8,7 +12,7 @@
 #include "fftw3.h"
 #include "tiffio.h"
 
-#include "matrix.h"
+#include <Eigen/Dense>
 #include "gpa.h"
 #include <iostream>
 
@@ -61,7 +65,7 @@ private slots:
 private:
     Ui::MainWindow *ui;
 
-    Matrix<std::complex<double>> original_image;
+    Eigen::MatrixXcd original_image;
 
     QString dialogPath;
 
@@ -96,7 +100,7 @@ private:
         TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &imagelength);
         scanline = TIFFScanlineSize(tif);
         buf = _TIFFmalloc(scanline);
-        Matrix<std::complex<double>> complexImage(imagelength, scanline/sizeof(T));
+        Eigen::MatrixXcd complexImage(imagelength, scanline/sizeof(T));
         for (uint32 row = 0; row < imagelength; ++row)
         {
             TIFFReadScanline(tif, buf, row);
@@ -114,7 +118,7 @@ private:
 
     void openDM(std::string filename);
 
-    void showImageAndFFT(Matrix<std::complex<double>> &image);
+    void showImageAndFFT(Eigen::MatrixXcd &image);
 
     void selectRefineArea();
 

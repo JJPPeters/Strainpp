@@ -3,7 +3,7 @@
 
 #include "iostream"
 
-Phase::Phase(std::shared_ptr<Matrix<std::complex<double>>> inputFFT, double gx, double gy, double sigma, std::shared_ptr<fftw_plan> forwardPlan, std::shared_ptr<fftw_plan> inversePlan)
+Phase::Phase(std::shared_ptr<Eigen::MatrixXcd> inputFFT, double gx, double gy, double sigma, std::shared_ptr<fftw_plan> forwardPlan, std::shared_ptr<fftw_plan> inversePlan)
 {
     _FFT = inputFFT;
     _gxPx = gx;
@@ -20,13 +20,13 @@ Phase::Phase(std::shared_ptr<Matrix<std::complex<double>>> inputFFT, double gx, 
 
 }
 
-Matrix<double> Phase::getGaussianMask()
+Eigen::MatrixXd Phase::getGaussianMask()
 {
-    // this justs shifts everything back to 0,0 at lower right corner
+    // this just shifts everything back to 0,0 at lower right corner
     double xf = _gxPx + _FFT->cols()/2;
     double yf = _gyPx + _FFT->rows()/2;
 
-    Matrix<double> mask(_FFT->rows(), _FFT->cols());
+    Eigen::MatrixXd mask(_FFT->rows(), _FFT->cols());
 
     for (int j = 0; j < _FFT->rows(); ++j)
     {
@@ -41,93 +41,93 @@ Matrix<double> Phase::getGaussianMask()
     return mask;
 }
 
-Matrix<std::complex<double>> Phase::getMaskedFFT()
+Eigen::MatrixXcd Phase::getMaskedFFT()
 {
-    Matrix<double> mask = getGaussianMask();
-    Matrix<std::complex<double>> maskedFFT(mask.rows(), mask.cols());
+    Eigen::MatrixXd mask = getGaussianMask();
+    //return (*_FFT).cwiseProduct(mask);
 
-    for (int i = 0; i < maskedFFT.size(); ++i)
-        maskedFFT(i) = (*_FFT)(i) * mask(i);
+    Eigen::MatrixXcd maskedFFT(mask.rows(), mask.cols());
+
+    maskedFFT = _FFT->cwiseProduct(mask);
 
     return maskedFFT;
 }
 
-Matrix<double> Phase::getBraggImage()
+Eigen::MatrixXd Phase::getBraggImage()
 {
-    Matrix<std::complex<double> > IFFT(_FFT->rows(), _FFT->cols());
-    Matrix<double> braggImage(_FFT->rows(), _FFT->cols());
+    Eigen::MatrixXcd IFFT(_FFT->rows(), _FFT->cols());
 
     // do IFFT of masked FFT then return abs or real part
     UtilsFFT::doFFTPlan(_IFFTplan, getMaskedFFT(), IFFT);
 
     IFFT = UtilsFFT::preFFTShift(IFFT);
 
-    for(int i = 0; i < braggImage.size(); ++i)
-        braggImage(i) = 2 * std::real(IFFT(i)) / (IFFT.rows() * IFFT.cols());
-
-    return braggImage;
+    return 2 * IFFT.real() / (IFFT.rows() * IFFT.cols());
 }
 
-Matrix<double> Phase::getRawPhase()
+Eigen::MatrixXd Phase::getRawPhase()
 {
     // only extracting phase so FFT normalising not needed
-    Matrix<double> phase(_FFT->rows(), _FFT->cols());
-    Matrix<std::complex<double> > IFFT(_FFT->rows(), _FFT->cols());
+    Eigen::MatrixXd phase(_FFT->rows(), _FFT->cols());
+    Eigen::MatrixXcd IFFT(_FFT->rows(), _FFT->cols());
 
     UtilsFFT::doFFTPlan(_IFFTplan, getMaskedFFT(), IFFT);
 
     IFFT = UtilsFFT::preFFTShift(IFFT);
 
+    // don't think eigen has a bette version of this
     for(int i = 0; i < phase.size(); ++i)
         phase(i) = std::arg(IFFT(i));
 
     return phase;
 }
 
-Matrix<double> Phase::getPhase()
+Eigen::MatrixXd Phase::getPhase()
 {
-    Matrix<double> phase = getRawPhase();
+    Eigen::MatrixXd phase = getRawPhase();
 
+    // can this be made faster in eigen?
     for(int j = 0; j < phase.rows(); ++j)
         for(int i =0; i < phase.cols(); ++i)
-        phase(j, i) = phase(j, i) - 2*PI * (i*_gx + j*_gy);
+            phase(j, i) = phase(j, i) - 2*PI * (i*_gx + j*_gy);
 
     return phase;
 }
 
-Matrix<double> Phase::getWrappedPhase()
+Eigen::MatrixXd Phase::getWrappedPhase()
 {
-    Matrix<double> phase = getPhase();
+    Eigen::MatrixXd phase = getPhase();
 
-    for(int i =0; i < phase.size(); ++i)
-        phase(i) = phase(i) - std::round(phase(i) / (2*PI)) * 2*PI;
+    for(int i = 0; i < phase.size(); ++i)
+        phase(i) -= std::round(phase(i) / (2*PI)) * 2*PI;
 
     _NormPhase = phase;
 
     return _NormPhase;
 }
 
-void Phase::getDifferential(Matrix<std::complex<double>> &dx, Matrix<std::complex<double>> &dy)
+void Phase::getDifferential(Eigen::MatrixXcd &dx, Eigen::MatrixXcd &dy)
 {
-    dx = Matrix<std::complex<double>>(_FFT->rows(), _FFT->cols());
-    dy = Matrix<std::complex<double>>(_FFT->rows(), _FFT->cols());
+    dx = Eigen::MatrixXcd(_FFT->rows(), _FFT->cols());
+    dy = Eigen::MatrixXcd(_FFT->rows(), _FFT->cols());
     // contains the convolutino kernel, then the resultant differential
-    Matrix<std::complex<double>> dx_kernel(_FFT->rows()+2, _FFT->cols()+2);
-    Matrix<std::complex<double>> dy_kernel(_FFT->rows()+2, _FFT->cols()+2);
+    Eigen::MatrixXcd dx_kernel(_FFT->rows()+2, _FFT->cols()+2);
+    Eigen::MatrixXcd dy_kernel(_FFT->rows()+2, _FFT->cols()+2);
     // contains exponential form of strain
-    Matrix<std::complex<double>> expPhase(_FFT->rows()+2, _FFT->cols()+2);
+    Eigen::MatrixXcd expPhase(_FFT->rows()+2, _FFT->cols()+2);
     // temp matrices to hold FFTs
-    Matrix<std::complex<double>> phaseTemp(_FFT->rows()+2, _FFT->cols()+2);
-    Matrix<std::complex<double>> xTemp(_FFT->rows()+2, _FFT->cols()+2);
-    Matrix<std::complex<double>> yTemp(_FFT->rows()+2, _FFT->cols()+2);
+    Eigen::MatrixXcd phaseTemp(_FFT->rows()+2, _FFT->cols()+2);
+    Eigen::MatrixXcd xTemp(_FFT->rows()+2, _FFT->cols()+2);
+    Eigen::MatrixXcd yTemp(_FFT->rows()+2, _FFT->cols()+2);
 
     // fill kernels with pre fft shifted data
     for (int i = 0; i < 3; ++i)
     {
-        // should all be divided by 6?
-        dx_kernel(i, 0) = -1;
-        dx_kernel(i, 2) = 1;
+        // should all be divided by 6 (this is not done later)
 
+        dx_kernel(i, 0) = 1;
+        dx_kernel(i, 2) = -1;
+        // our image is 'upside down' so with flip this kernel
         dy_kernel(0, i) = -1;
         dy_kernel(2, i) = 1;
     }
@@ -174,26 +174,25 @@ Coord2D<double> Phase::getGVector()
 
 void Phase::refinePhase(int t, int l, int b, int r)
 {
-    Matrix<double> area(t-b, r-l);
+    Eigen::MatrixXd area(t-b, r-l);
 
     for (int j = 0; j < t-b; ++j)
         for (int i = 0; i < r-l; ++i)
             area(j, i) = _NormPhase(j+b, i+l);
 
-    std::vector<double> C;
-    std::vector<double> W(area.size(), 1);
-    Matrix<double> X(3, area.size());
+    Eigen::MatrixXd X(area.size(), 3);
     for (int j = 0; j < area.rows(); ++j)
         for (int i = 0; i < area.cols(); ++i)
         {
-            X(0, j + i*area.rows()) = 1;
-            X(1, j + i*area.rows()) = i;
-            X(2, j + i*area.rows()) = j;
+            X(j + i*area.rows(), 0) = 1;
+            X(j + i*area.rows(), 1) = i;
+            X(j + i*area.rows(), 2) = j;
         }
 
-    auto y = area.getData();
+    area.resize(area.size(), 1);
 
-    Regression::LinearRegression(y, X, W, C);
+    // need rows == rows...
+    Eigen::Vector3d C = X.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(area);
 
     double dGxPx = C[1] / (2*PI) * area.cols();
     double dGyPx = C[2] / (2*PI) * area.rows();

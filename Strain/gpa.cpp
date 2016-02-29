@@ -1,11 +1,12 @@
 #include "gpa.h"
+#include <iostream>
 
-GPA::GPA(Matrix<std::complex<double>> img)
+GPA::GPA(Eigen::MatrixXcd img)
 {
     // initialise vectors
     _Phases.resize(2);
-    _Image = std::make_shared<Matrix<std::complex<double>>>(img);
-    _FFT = std::make_shared<Matrix<std::complex<double>>>(Matrix<std::complex<double>>(_Image->rows(), _Image->cols()));
+    _Image = std::make_shared<Eigen::MatrixXcd>(img);
+    _FFT = std::make_shared<Eigen::MatrixXcd>(Eigen::MatrixXcd(_Image->rows(), _Image->cols()));
 
     // create fftw plans
     _FFTplan = std::make_shared<fftw_plan>(fftw_plan_dft_2d(_Image->rows(), _Image->cols(), NULL, NULL, FFTW_FORWARD, FFTW_ESTIMATE));
@@ -15,32 +16,32 @@ GPA::GPA(Matrix<std::complex<double>> img)
     UtilsFFT::doFFTPlan(_FFTplan, UtilsFFT::preFFTShift(*_Image), *_FFT);
 }
 
-std::shared_ptr<Matrix<std::complex<double>>> GPA::getImage()
+std::shared_ptr<Eigen::MatrixXcd> GPA::getImage()
 {
     return _Image;
 }
 
-std::shared_ptr<Matrix<std::complex<double>>> GPA::getFFT()
+std::shared_ptr<Eigen::MatrixXcd> GPA::getFFT()
 {
     return _FFT;
 }
 
-std::shared_ptr<Matrix<double>> GPA::getExx()
+std::shared_ptr<Eigen::MatrixXd> GPA::getExx()
 {
     return _Exx;
 }
 
-std::shared_ptr<Matrix<double>> GPA::getExy()
+std::shared_ptr<Eigen::MatrixXd> GPA::getExy()
 {
     return _Exy;
 }
 
-std::shared_ptr<Matrix<double>> GPA::getEyx()
+std::shared_ptr<Eigen::MatrixXd> GPA::getEyx()
 {
     return _Eyx;
 }
 
-std::shared_ptr<Matrix<double>> GPA::getEyy()
+std::shared_ptr<Eigen::MatrixXd> GPA::getEyy()
 {
     return _Eyy;
 }
@@ -50,10 +51,10 @@ int GPA::getGVectors()
     int xs = _FFT->cols();
     int ys = _FFT->rows();
 
-    //Matrix<double> _PS(ys, xs);
+    //Eigen::MatrixXd _PS(ys, xs);
 
-    Matrix<std::complex<double>> _PS(ys, xs);
-    Matrix<std::complex<double>> hanned = UtilsMaths::HannWindow(*_Image);
+    Eigen::MatrixXcd _PS(ys, xs);
+    Eigen::MatrixXcd hanned = UtilsMaths::HannWindow(*_Image);
     UtilsFFT::doFFTPlan(_FFTplan, UtilsFFT::preFFTShift(hanned), _PS);
             //= UtilsMaths::HannWindow(original_image);;
 
@@ -147,10 +148,10 @@ std::shared_ptr<Phase> GPA::getPhase(int i)
     return _Phases[i];
 }
 
-Matrix<double> GPA::_GetRotationMatrix(double angle)
+Eigen::MatrixXd GPA::_GetRotationMatrix(double angle)
 {
-    Matrix<double> rotmat(2, 2);
-    angle*= 180/PI;
+    Eigen::Matrix<double, 2, 2> rotmat;
+    angle *= PI/180;
 
     rotmat(0, 0) = std::cos(angle);
     rotmat(0, 1) = std::sin(angle);
@@ -162,32 +163,42 @@ Matrix<double> GPA::_GetRotationMatrix(double angle)
 
 void GPA::calculateStrain(double angle)
 {
-    Matrix<std::complex<double>> d1dx, d1dy, d2dx, d2dy;
+    Eigen::MatrixXcd d1dx, d1dy, d2dx, d2dy;
 
     _Phases[0]->getDifferential(d1dx, d1dy);
     _Phases[1]->getDifferential(d2dx, d2dy);
 
     //calculate A matrix (from G matrix)
     //here I do several steps in one go, but all I am doing is Inverse(Transpose(G)) = A
-    Matrix<double> A(2,2);
+    Eigen::Matrix<double, 2, 2> A;
     Coord2D<double> g1 = _Phases[0]->getGVector();
     Coord2D<double> g2 = _Phases[1]->getGVector();
 
-    double factor = 1.0 / (g1.x * g2.y - g1.y * g2.x);
+    A << g1.x, g2.x, -g1.y, -g2.y;
+    A = A.transpose().inverse();
+    A *= _GetRotationMatrix(angle);
 
-    // invert the transpose
-    A(0, 0) = factor * g2.y;
-    A(1, 0) = factor * -g2.x;
-    A(0, 1) = factor * -g1.y;
-    A(1, 1) = factor * g1.x;
+    double factor = -1.0 / (2.0 * PI);
+    _Exx = std::make_shared<Eigen::MatrixXd>( (factor * (A(0, 0) * d1dx + A(0, 1) * d2dx)).real() );
+    _Exy = std::make_shared<Eigen::MatrixXd>( (factor * (A(0, 0) * d1dy + A(0, 1) * d2dy)).real() );
+    _Eyx = std::make_shared<Eigen::MatrixXd>( (factor * (A(1, 0) * d1dx + A(1, 1) * d2dx)).real() );
+    _Eyy = std::make_shared<Eigen::MatrixXd>( (factor * (A(1, 0) * d1dy + A(1, 1) * d2dy)).real() );
 
-    A = Inner(A, _GetRotationMatrix(angle));
+    correctStrains();
+}
 
-    // reusing factor
-    factor = -1.0 / (2.0 * PI);
+void GPA::correctStrains()
+{
+    Eigen::MatrixXd ones;
+    ones.setOnes(_Image->rows(), _Image->cols());
 
-    _Exx = std::make_shared<Matrix<double>>( jml::Real(factor * (A(0, 0) * d1dx + A(0, 1) * d2dx)));
-    _Exy = std::make_shared<Matrix<double>>( jml::Real(factor * (A(0, 0) * d1dy + A(0, 1) * d2dy)));
-    _Eyx = std::make_shared<Matrix<double>>( jml::Real(factor * (A(1, 0) * d1dx + A(1, 1) * d2dx)));
-    _Eyy = std::make_shared<Matrix<double>>( jml::Real(factor * (A(1, 0) * d1dy + A(1, 1) * d2dy)));
+    Eigen::MatrixXd a = ones - (*_Exx);
+    Eigen::MatrixXd b = (*_Exy);
+    Eigen::MatrixXd c = (*_Eyx);
+    Eigen::MatrixXd d = ones - (*_Eyy);
+    Eigen::MatrixXd bigD = a.cwiseProduct(d) - b.cwiseProduct(c);
+    _Exx = std::make_shared<Eigen::MatrixXd>( d.cwiseQuotient(bigD) - ones );
+    _Exy = std::make_shared<Eigen::MatrixXd>( -1 * b.cwiseQuotient(bigD) );
+    _Eyx = std::make_shared<Eigen::MatrixXd>( -1 * c.cwiseQuotient(bigD) );
+    _Eyy = std::make_shared<Eigen::MatrixXd>( a.cwiseQuotient(bigD) - ones );
 }

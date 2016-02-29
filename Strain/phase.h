@@ -1,20 +1,23 @@
 #ifndef PHASE_H
 #define PHASE_H
 
-#include <memory>
-#include <complex>
-
-#include "fftw3.h"
-
-#include "matrix.h"
-#include "utils.h"
-#include "regression.h"
-#include "coord.h"
+#ifndef EIGEN_DEFAULT_TO_ROW_MAJOR
+#define EIGEN_DEFAULT_TO_ROW_MAJOR
+#endif
 
 #ifndef PI_H
 #define PI_H
 const double PI = 3.14159265358979323846;
 #endif
+
+#include <memory>
+#include <complex>
+
+#include "fftw3.h"
+
+#include <Eigen/Dense>
+#include "utils.h"
+#include "coord.h"
 
 class Phase
 {
@@ -22,33 +25,33 @@ private:
 
     double _gxPx, _gyPx, _gx, _gy, _sigma;
 
-    std::shared_ptr<Matrix<std::complex<double>>> _FFT;
+    std::shared_ptr<Eigen::MatrixXcd> _FFT;
 
-    Matrix<double> _NormPhase;
+    Eigen::MatrixXd _NormPhase;
 
     std::shared_ptr<fftw_plan> _FFTplan, _IFFTplan, _FFTdiffplan, _IFFTdiffplan;
 
 public:
 
-    Phase(std::shared_ptr<Matrix<std::complex<double>>> inputFFT, double gx, double gy, double sigma, std::shared_ptr<fftw_plan> forwardPlan, std::shared_ptr<fftw_plan> inversePlan);
+    Phase(std::shared_ptr<Eigen::MatrixXcd> inputFFT, double gx, double gy, double sigma, std::shared_ptr<fftw_plan> forwardPlan, std::shared_ptr<fftw_plan> inversePlan);
 
-    Matrix<double> getGaussianMask();
+    Eigen::MatrixXd getGaussianMask();
 
-    Matrix<std::complex<double>> getMaskedFFT();
+    Eigen::MatrixXcd getMaskedFFT();
 
-    Matrix<double> getBraggImage();
+    Eigen::MatrixXd getBraggImage();
 
-    Matrix<double> getHgImage();
+    Eigen::MatrixXd getHgImage();
 
-    Matrix<double> getRawPhase();
+    Eigen::MatrixXd getRawPhase();
 
-    Matrix<double> getPhase();
+    Eigen::MatrixXd getPhase();
 
-    Matrix<double> getWrappedPhase();
+    Eigen::MatrixXd getWrappedPhase();
 
     Coord2D<double> getGVector();
 
-    void getDifferential(Matrix<std::complex<double>> &dx, Matrix<std::complex<double>> &dy);
+    void getDifferential(Eigen::MatrixXcd &dx, Eigen::MatrixXcd &dy);
 
     void refinePhase(int t, int l, int b, int r);
 

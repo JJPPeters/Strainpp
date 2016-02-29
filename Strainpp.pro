@@ -24,6 +24,7 @@ INCLUDEPATH += ReadDM \
     D:\Programming\Cpp\boost_1_57_0 \
     D:\Programming\Cpp\qcustomplot \
     D:\Programming\Cpp\FFTW3 \
+    D:\Programming\Cpp\eigen3.28 \
 
 SOURCES += main.cpp\
         mainwindow.cpp \
@@ -39,14 +40,11 @@ HEADERS  += mainwindow.h \
     Utils/exceptions.h \
     Strain/phase.h \
     Strain/gpa.h \
-    Utils/matrix.h \
-    Utils/matrix-operations.h \
     Utils/utils.h \
     ReadDM/dmutils.h \
     ReadDM/tagreader.h \
     ReadDM/streamreader.h \
     ReadDM/dmreader.h \
-    Utils/regression.h \
     Utils/coord.h \
     Plotting/colorbarplot.h
 

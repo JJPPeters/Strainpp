@@ -1,6 +1,15 @@
 #ifndef GPA_H
 #define GPA_H
 
+#ifndef PI_H
+#define PI_H
+const double PI = 3.14159265358979323846;
+#endif
+
+#ifndef EIGEN_DEFAULT_TO_ROW_MAJOR
+#define EIGEN_DEFAULT_TO_ROW_MAJOR
+#endif
+
 #include <memory>
 #include <complex>
 #include <algorithm>
@@ -8,53 +17,48 @@
 
 #include "fftw3.h"
 
-#include "matrix.h"
+#include <Eigen/Dense>
 #include "utils.h"
 #include "phase.h"
 #include "coord.h"
 
-#ifndef PI_H
-#define PI_H
-const double PI = 3.14159265358979323846;
-#endif
-
 class GPA
 {
 private:
-    std::shared_ptr<Matrix<std::complex<double>>> _Image, _FFT;
+    std::shared_ptr<Eigen::MatrixXcd> _Image, _FFT;
     
-    std::shared_ptr<Matrix<double>> _Exx, _Exy, _Eyx, _Eyy;
+    std::shared_ptr<Eigen::MatrixXd> _Exx, _Exy, _Eyx, _Eyy;
 
     std::vector<std::shared_ptr<Phase>> _Phases;
 
     std::shared_ptr<fftw_plan> _FFTplan, _IFFTplan;
 
-    Matrix<double> _GetRotationMatrix(double angle);
+    Eigen::MatrixXd _GetRotationMatrix(double angle);
 
 public:
 
-    GPA(Matrix<std::complex<double>> img);
+    GPA(Eigen::MatrixXcd img);
 
-    void updateImage(Matrix<std::complex<double>> img)
+    void updateImage(Eigen::MatrixXcd img)
     {
         if (img.rows() != _Image->rows() || img.cols() != _Image->cols())
             return;
 
-        _Image = std::make_shared<Matrix<std::complex<double>>>(img);
+        _Image = std::make_shared<Eigen::MatrixXcd>(img);
         UtilsFFT::doFFTPlan(_FFTplan, UtilsFFT::preFFTShift(*_Image), *_FFT);
     }
 
-    std::shared_ptr<Matrix<std::complex<double>>> getImage();
+    std::shared_ptr<Eigen::MatrixXcd> getImage();
 
-    std::shared_ptr<Matrix<std::complex<double>>> getFFT();
+    std::shared_ptr<Eigen::MatrixXcd> getFFT();
 
-    std::shared_ptr<Matrix<double>> getExx();
+    std::shared_ptr<Eigen::MatrixXd> getExx();
 
-    std::shared_ptr<Matrix<double>> getExy();
+    std::shared_ptr<Eigen::MatrixXd> getExy();
 
-    std::shared_ptr<Matrix<double>> getEyx();
+    std::shared_ptr<Eigen::MatrixXd> getEyx();
 
-    std::shared_ptr<Matrix<double>> getEyy();
+    std::shared_ptr<Eigen::MatrixXd> getEyy();
 
     int getGVectors();
 
@@ -65,6 +69,8 @@ public:
     void rotateReference();
 
     void calculateStrain(double angle);
+
+    void correctStrains();
 
     Coord2D<int> getSize()
     {

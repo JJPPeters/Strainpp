@@ -115,10 +115,12 @@ void MainWindow::openDM(std::string filename)
     dmFile.close();;
 
     // image is complex for FFTing later
-    Matrix<std::complex<double>> complexImage(ny, nx);
+    Eigen::MatrixXcd complexImage(ny, nx);
 
     for (int i = 0; i < complexImage.size(); ++i)
         complexImage(i) = image[i];
+
+    complexImage = complexImage.colwise().reverse().eval();
 
     image.clear();
 
@@ -134,7 +136,10 @@ void MainWindow::openTIFF(std::string filename)
     TIFF* tif = TIFFOpen(filename.c_str(), "r");
 
     if (!tif)
+    {
+        QMessageBox::information(this, tr("File open"), tr("Error opening TIFF"), QMessageBox::Ok);
         return;
+    }
 
     uint32 samples;
     TIFFGetField(tif, TIFFTAG_SAMPLESPERPIXEL, &samples);
@@ -180,11 +185,16 @@ void MainWindow::openTIFF(std::string filename)
         else if (bitsper == 64)
             readTiffData<double>(tif);
     }
+    else
+    {
+        QMessageBox::information(this, tr("File open"), tr("Unsupported TIFF format"), QMessageBox::Ok);
+        return;
+    }
 
     TIFFClose(tif);
 }
 
-void MainWindow::showImageAndFFT(Matrix<std::complex<double>> &image)
+void MainWindow::showImageAndFFT(Eigen::MatrixXcd &image)
 {
     ui->imagePlot->clearImage(false);
     ui->fftPlot->clearImage(false);
@@ -316,7 +326,7 @@ void MainWindow::clickBraggSpot(QMouseEvent *event)
 
     GPAstrain->calculatePhase(phaseSelection, x, y, sig);
 
-    Matrix<double> ph = GPAstrain->getPhase(phaseSelection)->getWrappedPhase();
+    Eigen::MatrixXd ph = GPAstrain->getPhase(phaseSelection)->getWrappedPhase();
 
     try
     {
@@ -467,7 +477,7 @@ void MainWindow::doRefinement(double top, double left, double bottom, double rig
 
     GPAstrain->getPhase(phaseSelection)->refinePhase(t, l, b, r);
 
-    Matrix<double> ph = GPAstrain->getPhase(phaseSelection)->getWrappedPhase();
+    Eigen::MatrixXd ph = GPAstrain->getPhase(phaseSelection)->getWrappedPhase();
 
     try
     {
@@ -559,8 +569,8 @@ void MainWindow::updateOtherPlot(int index, int side, bool rePlot)
     if (index == 6 || index== 7)
     {
         auto imSize = GPAstrain->getSize();
-        Matrix<std::complex<double> > dx = Matrix<std::complex<double> >(imSize.y, imSize.x);
-        Matrix<std::complex<double> > dy = Matrix<std::complex<double> >(imSize.y, imSize.x);
+        Eigen::MatrixXcd dx(imSize.y, imSize.x);
+        Eigen::MatrixXcd dy(imSize.y, imSize.x);
         GPAstrain->getPhase(side)->getDifferential(dx, dy);
         if (index == 6)
             image->SetImage(dx, ShowComplex::Real, rePlot);
@@ -602,7 +612,7 @@ void MainWindow::on_actionHann_triggered()
     DisconnectAll();
     ClearImages();
 
-    Matrix<std::complex<double>> image;
+    Eigen::MatrixXcd image;
 
     if (ui->actionHann->isChecked())
         image = UtilsMaths::HannWindow(original_image);
