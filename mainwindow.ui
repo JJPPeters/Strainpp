@@ -61,7 +61,7 @@
       </widget>
       <widget class="QWidget" name="tabStrain">
        <attribute name="title">
-        <string>Strain</string>
+        <string>Result</string>
        </attribute>
        <layout class="QGridLayout" name="gridLayout_2">
         <item row="0" column="0">
