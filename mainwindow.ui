@@ -67,12 +67,68 @@
         <item row="0" column="0">
          <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,1">
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,0,0,0,0,0,0,4">
+           <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,1,0,0,0,0,0,0,4">
+            <item>
+             <widget class="QComboBox" name="resultModeBox">
+              <property name="minimumSize">
+               <size>
+                <width>100</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="currentText">
+               <string>Distortion</string>
+              </property>
+              <item>
+               <property name="text">
+                <string>Distortion</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Strain</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Rotation</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Dilitation</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_4">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeType">
+               <enum>QSizePolicy::Fixed</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>10</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QLabel" name="label">
+              <property name="text">
+               <string>Colour:</string>
+              </property>
+             </widget>
+            </item>
             <item>
              <widget class="QComboBox" name="colourMapBox">
               <property name="minimumSize">
                <size>
-                <width>150</width>
+                <width>100</width>
                 <height>0</height>
                </size>
               </property>
@@ -395,7 +451,7 @@
        <bool>false</bool>
       </property>
       <property name="title">
-       <string>Strains</string>
+       <string>Distortions</string>
       </property>
       <addaction name="actionExportStrainsIm"/>
       <addaction name="actionExportStrainsDat"/>

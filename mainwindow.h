@@ -64,6 +64,8 @@ private slots:
     void on_actionExportStrainsBin_triggered() {ExportStrains(2);}
     void on_angleSpin_editingFinished();
 
+    void on_resultModeBox_currentIndexChanged(const QString &arg1);
+
 private:
     Ui::MainWindow *ui;
 

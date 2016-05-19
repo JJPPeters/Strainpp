@@ -148,7 +148,7 @@ std::shared_ptr<Phase> GPA::getPhase(int i)
     return _Phases[i];
 }
 
-void GPA::calculateDistortion(double angle)
+void GPA::calculateDistortion(double angle, std::string mode)
 {
     Eigen::MatrixXcd d1dx, d1dy, d2dx, d2dy;
 
@@ -172,14 +172,25 @@ void GPA::calculateDistortion(double angle)
     _Exy = std::make_shared<Eigen::MatrixXd>( (factor * (A(0, 0) * d1dy + A(0, 1) * d2dy)).real() );
     _Eyx = std::make_shared<Eigen::MatrixXd>( (factor * (A(1, 0) * d1dx + A(1, 1) * d2dx)).real() );
     _Eyy = std::make_shared<Eigen::MatrixXd>( (factor * (A(1, 0) * d1dy + A(1, 1) * d2dy)).real() );
-}
 
-Eigen::MatrixXd GPA::getStrain()
-{
-     return 0.5 * (*_Exy + *_Eyx);
-}
-
-Eigen::MatrixXd GPA::getRotation()
-{
-    return 0.5 * (*_Exy - *_Eyx);
+    if (mode == "Strain")
+    {
+        _Exy = std::make_shared<Eigen::MatrixXd>(0.5 * (*_Exy + *_Eyx));
+        _Eyx = std::make_shared<Eigen::MatrixXd>(*_Exy);
+    }
+    else if (mode == "Rotation")
+    {
+        auto temp = *_Exy;
+        _Exx = std::make_shared<Eigen::MatrixXd>( Eigen::MatrixXd::Constant(_Exx->rows(), _Exx->cols(), 0.0) );
+        _Exy = std::make_shared<Eigen::MatrixXd>(0.5 * (*_Exy - *_Eyx));
+        _Eyx = std::make_shared<Eigen::MatrixXd>(0.5 * (*_Eyx - temp));
+        _Eyy = std::make_shared<Eigen::MatrixXd>( Eigen::MatrixXd::Constant(_Eyy->rows(), _Eyy->cols(), 0.0) );
+    }
+    else if (mode == "Dilitation")
+    {
+        _Exx = std::make_shared<Eigen::MatrixXd>(*_Exx - *_Eyy);
+        _Exy = std::make_shared<Eigen::MatrixXd>( Eigen::MatrixXd::Constant(_Exx->rows(), _Exx->cols(), 0.0) );
+        _Eyx = std::make_shared<Eigen::MatrixXd>( Eigen::MatrixXd::Constant(_Exx->rows(), _Exx->cols(), 0.0) );
+        _Eyy = std::make_shared<Eigen::MatrixXd>( Eigen::MatrixXd::Constant(_Eyy->rows(), _Eyy->cols(), 0.0) );
+    }
 }

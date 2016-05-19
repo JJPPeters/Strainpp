@@ -241,6 +241,7 @@ void MainWindow::on_actionGPA_triggered()
         return;
 
     DisconnectAll();
+    ClearImages();
 
     ui->tabWidget->setCurrentIndex(0);
 
@@ -413,9 +414,6 @@ void MainWindow::continuePhase()
 
 void MainWindow::selectRefineArea()
 {
-    if(!minimalDialogs)
-        QMessageBox::information(this, tr("GPA"), tr("Select corners of refinement area on phase"), QMessageBox::Ok);
-
     if (phaseSelection != 0 && xCorner.size() == 2)
     {
         double top = std::max(yCorner[0], yCorner[1]);
@@ -433,6 +431,8 @@ void MainWindow::selectRefineArea()
         }
         else
         {
+            if(!minimalDialogs)
+                QMessageBox::information(this, tr("GPA"), tr("Select corners of refinement area on phase"), QMessageBox::Ok);
             ui->imagePlot->clearAllItems();
             ui->imagePlot->replot();
             xCorner.clear();
@@ -443,7 +443,8 @@ void MainWindow::selectRefineArea()
     }
     else
     {
-
+        if(!minimalDialogs)
+            QMessageBox::information(this, tr("GPA"), tr("Select corners of refinement area on phase"), QMessageBox::Ok);
         xCorner.clear();
         yCorner.clear();
         connect(ui->imagePlot, &ImagePlot::mousePress, this, &MainWindow::clickRectCorner);
@@ -566,12 +567,31 @@ void MainWindow::getStrains()
     ui->tabWidget->setCurrentIndex(1);
 
     double angle = ui->angleSpin->value();
+    std::string mode = ui->resultModeBox->currentText().toStdString();
 
-    GPAstrain->calculateDistortion(angle);
-    ui->exxPlot->SetImage(*(GPAstrain->getExx()), false);
-    ui->exyPlot->SetImage(*(GPAstrain->getExy()), false);
-    ui->eyxPlot->SetImage(*(GPAstrain->getEyx()), false);
-    ui->eyyPlot->SetImage(*(GPAstrain->getEyy()), false);
+    GPAstrain->calculateDistortion(angle, mode);
+
+    if (mode == "Distortion" || mode == "Strain")
+    {
+        ui->exxPlot->SetImage(*(GPAstrain->getExx()), false);
+        ui->exyPlot->SetImage(*(GPAstrain->getExy()), false);
+        ui->eyxPlot->SetImage(*(GPAstrain->getEyx()), false);
+        ui->eyyPlot->SetImage(*(GPAstrain->getEyy()), false);
+    }
+    else if (mode == "Rotation")
+    {
+        ui->exxPlot->clearImage();
+        ui->exyPlot->SetImage(*(GPAstrain->getExy()), false);
+        ui->eyxPlot->SetImage(*(GPAstrain->getEyx()), false);
+        ui->eyyPlot->clearImage();
+    }
+    else if (mode == "Dilitation")
+    {
+        ui->exxPlot->SetImage(*(GPAstrain->getExx()), false);
+        ui->exyPlot->clearImage();
+        ui->eyxPlot->clearImage();
+        ui->eyyPlot->clearImage();
+    }
 
     haveStrains = true;
 
@@ -703,10 +723,30 @@ void MainWindow::ExportAll(int choice)
     ui->imagePlot->ExportSelector(fileDir, "image", choice);
     ui->fftPlot->ExportSelector(fileDir, "FFT", choice);
 
-    ui->exxPlot->ExportSelector(fileDir, "exx", choice);
-    ui->exyPlot->ExportSelector(fileDir, "exy", choice);
-    ui->eyxPlot->ExportSelector(fileDir, "eyx", choice);
-    ui->eyyPlot->ExportSelector(fileDir, "eyy", choice);
+    std::string mode = ui->resultModeBox->currentText().toStdString();
+
+    if (mode == "Distortion")
+    {
+        ui->exxPlot->ExportSelector(fileDir, "exx", choice);
+        ui->exyPlot->ExportSelector(fileDir, "exy", choice);
+        ui->eyxPlot->ExportSelector(fileDir, "eyx", choice);
+        ui->eyyPlot->ExportSelector(fileDir, "eyy", choice);
+    }
+    else if(mode == "Strain")
+    {
+        ui->exxPlot->ExportSelector(fileDir, "epsxx", choice);
+        ui->exyPlot->ExportSelector(fileDir, "epsxy", choice);
+        ui->eyyPlot->ExportSelector(fileDir, "epsyy", choice);
+    }
+    else if(mode == "Rotation")
+    {
+        ui->exyPlot->ExportSelector(fileDir, "wxy", choice);
+        ui->eyxPlot->ExportSelector(fileDir, "wyx", choice);
+    }
+    else if(mode == "Dilitation")
+    {
+        ui->exxPlot->ExportSelector(fileDir, "Dilitation", choice);
+    }
 
     // need to loop through and show images before exporting them from same plot
     for(int i = 0; i < ui->leftCombo->count(); ++i)
@@ -739,10 +779,31 @@ void MainWindow::ExportStrains(int choice)
 
     settings.setValue("dialog/currentSavePath", fileDir);
 
-    ui->exxPlot->ExportSelector(fileDir, "exx", choice);
-    ui->exyPlot->ExportSelector(fileDir, "exy", choice);
-    ui->eyxPlot->ExportSelector(fileDir, "eyx", choice);
-    ui->eyyPlot->ExportSelector(fileDir, "eyy", choice);
+    std::string mode = ui->resultModeBox->currentText().toStdString();
+
+    if (mode == "Distortion")
+    {
+        ui->exxPlot->ExportSelector(fileDir, "exx", choice);
+        ui->exyPlot->ExportSelector(fileDir, "exy", choice);
+        ui->eyxPlot->ExportSelector(fileDir, "eyx", choice);
+        ui->eyyPlot->ExportSelector(fileDir, "eyy", choice);
+    }
+    else if(mode == "Strain")
+    {
+        ui->exxPlot->ExportSelector(fileDir, "epsxx", choice);
+        ui->exyPlot->ExportSelector(fileDir, "epsxy", choice);
+        ui->eyxPlot->ExportSelector(fileDir, "epsyx", choice);
+        ui->eyyPlot->ExportSelector(fileDir, "epsyy", choice);
+    }
+    else if(mode == "Rotation")
+    {
+        ui->exyPlot->ExportSelector(fileDir, "wxy", choice);
+        ui->eyxPlot->ExportSelector(fileDir, "wyx", choice);
+    }
+    else if(mode == "Dilitation")
+    {
+        ui->exxPlot->ExportSelector(fileDir, "Dilitation", choice);
+    }
 }
 
 void MainWindow::DisconnectAll()
@@ -766,6 +827,14 @@ void MainWindow::ClearImages()
 }
 
 void MainWindow::on_angleSpin_editingFinished()
+{
+    if(!haveStrains)
+        return;
+
+    getStrains();
+}
+
+void MainWindow::on_resultModeBox_currentIndexChanged(const QString &mode)
 {
     if(!haveStrains)
         return;

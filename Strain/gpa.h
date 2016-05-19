@@ -66,11 +66,7 @@ public:
 
     void rotateReference();
 
-    void calculateDistortion(double angle);
-
-    Eigen::MatrixXd getStrain();
-
-    Eigen::MatrixXd getRotation();
+    void calculateDistortion(double angle, std::string mode);
 
     Coord2D<int> getSize()
     {
