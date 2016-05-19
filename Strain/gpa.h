@@ -33,8 +33,6 @@ private:
 
     std::shared_ptr<fftw_plan> _FFTplan, _IFFTplan;
 
-    Eigen::MatrixXd _GetRotationMatrix(double angle);
-
 public:
 
     GPA(Eigen::MatrixXcd img);
@@ -68,9 +66,11 @@ public:
 
     void rotateReference();
 
-    void calculateStrain(double angle);
+    void calculateDistortion(double angle);
 
-    void correctStrains();
+    Eigen::MatrixXd getStrain();
+
+    Eigen::MatrixXd getRotation();
 
     Coord2D<int> getSize()
     {

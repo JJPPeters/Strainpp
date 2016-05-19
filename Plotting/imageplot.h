@@ -25,6 +25,8 @@ enum ShowComplex{
         Amplitude,
         PowerSpectrum};
 
+typedef std::map<std::string, std::map<std::string, std::string>>::iterator it_type;
+
 class ImagePlot : public QCustomPlot
 {
     Q_OBJECT
@@ -174,27 +176,25 @@ public:
         haveImage = true;
     }
 
-    void DrawCircle(double x, double y, QColor colour = Qt::red, QBrush fill = QBrush(Qt::red), double radius = 2, double thickness = 2)
+    void DrawCircle(double x, double y, QColor colour = Qt::red, QBrush fill = QBrush(Qt::red), double radius = 2, Qt::PenStyle line = Qt::SolidLine, double thickness = 2)
     {
-        std::shared_ptr<QCPItemEllipse> circle(new QCPItemEllipse(this));
-        circle->setPen(QPen(colour, thickness));
+        QCPItemEllipse* circle(new QCPItemEllipse(this));
+        circle->setPen(QPen(colour, thickness, line));
         circle->setBrush(fill);
         circle->topLeft->setCoords(x-radius, y-radius);
         circle->bottomRight->setCoords(x+radius, y+radius);
-        Ellipses.push_back(circle);
-        addItem(circle.get());
+        addItem(circle);
         replot();
     }
 
     void DrawRectangle(double t, double l, double b, double r, QColor colour = Qt::red, QBrush fill = QBrush(Qt::NoBrush), double thickness = 2)
     {
-        std::shared_ptr<QCPItemRect> rect(new QCPItemRect(this));
+        QCPItemRect* rect(new QCPItemRect(this));
         rect->setPen(QPen(colour, thickness));
         rect->setBrush(fill);
         rect->topLeft->setCoords(l, t);
         rect->bottomRight->setCoords(r, b);
-        Rects.push_back(rect);
-        addItem(rect.get());
+        addItem(rect);
         replot();
     }
 
@@ -206,6 +206,23 @@ public:
             replot();
     }
 
+    void clearAllItems(bool doReplot = true)
+    {
+        clearItems();
+        if (doReplot)
+            replot();
+    }
+
+    bool inAxis(double x, double y)
+    {
+        int bottom = ImageObject->data()->valueRange().lower;
+        int top = ImageObject->data()->valueRange().upper;
+        int left = ImageObject->data()->keyRange().lower;
+        int right = ImageObject->data()->keyRange().upper;
+
+        return x < right && x > left && y < top && y > bottom;
+    }
+
 private:
     QCPColorMap *ImageObject;
 
@@ -214,10 +231,6 @@ private:
     double AspectRatio = 1;
 
     int size_x, size_y;
-
-    std::vector<std::shared_ptr<QCPItemEllipse>> Ellipses;
-
-    std::vector<std::shared_ptr<QCPItemRect>> Rects;
 
     int lastWidth, lastHeight;
 

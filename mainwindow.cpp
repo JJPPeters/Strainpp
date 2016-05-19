@@ -15,12 +15,18 @@ MainWindow::MainWindow(QWidget *parent) :
         settings.setValue("dialog/currentPath", QStandardPaths::HomeLocation);
     if (!settings.contains("dialog/currentSavePath"))
         settings.setValue("dialog/currentSavePath", QStandardPaths::HomeLocation);
+    if (!settings.contains("dialog/minimal"))
+        minimalDialogs = false;
+    else
+        minimalDialogs = settings.value("dialog/minimal").toBool();
 
     ui->setupUi(this);
 
     setWindowTitle("Strain++");
 
-    //add lebel to  status bar (can't be done with designer)
+    ui->actionMinimal_dialogs->setChecked(minimalDialogs);
+
+    // add label to  status bar (can't be done with designer)
     statusLabel = new QLabel("--");
     statusLabel->setContentsMargins(10,0,0,0);
     statusLabel->setSizePolicy(QSizePolicy::MinimumExpanding,
@@ -42,7 +48,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->colorBar, SIGNAL(mapChanged(QCPColorGradient)), ui->exyPlot, SLOT(SetColorMap(QCPColorGradient)));
     connect(ui->colorBar, SIGNAL(mapChanged(QCPColorGradient)), ui->eyxPlot, SLOT(SetColorMap(QCPColorGradient)));
     connect(ui->colorBar, SIGNAL(mapChanged(QCPColorGradient)), ui->eyyPlot, SLOT(SetColorMap(QCPColorGradient)));
-  
 }
 
 
@@ -239,80 +244,103 @@ void MainWindow::on_actionGPA_triggered()
 
     ui->tabWidget->setCurrentIndex(0);
 
-    // remove annotation from other strain analyses
-    ui->fftPlot->clearItems();
+    // remove annotation from other, old strain analyses
+    ui->fftPlot->clearAllItems();
     ui->fftPlot->replot();
 
     minGrad = GPAstrain->getGVectors();
 
-    ui->fftPlot->DrawCircle(0, 0, Qt::red, QBrush(Qt::NoBrush), minGrad);
-    ui->fftPlot->DrawCircle(0, 0);
+    AcceptGVector(minGrad);
+}
 
-    auto reply = QMessageBox::question(this, tr("GPA"), tr("Does the circle touch the smallest g-vector?"), QMessageBox::No | QMessageBox::Yes);
-
-    ui->fftPlot->clearItems();
-    ui->fftPlot->replot();
-
-    if (reply == QMessageBox::No)
+void MainWindow::AcceptGVector(double minGrad)
+{
+    bool happy = false;
+    // I hate myself for this loop, but it is to avoid recursion with the manual entry
+    while (!happy)
     {
-        updateStatusBar("Select the smallest g-vector on the FFT");
-        QMessageBox::information(this, tr("GPA"), tr("Select the smallest g-vector on the FFT"), QMessageBox::Ok);
-        connect(ui->fftPlot, &ImagePlot::mousePress, this, &MainWindow::clickGVector);
-    }
-    else
-    {
-        phaseSelection = 0;
-        updateStatusBar("Select a g-vector on the FFT");
-        QMessageBox::information(this, tr("GPA"), tr("Select a g-vector on the FFT"), QMessageBox::Ok);
+        ui->fftPlot->DrawCircle(0, 0, Qt::red, QBrush(Qt::NoBrush), minGrad, Qt::DotLine);
+        ui->fftPlot->DrawCircle(0, 0, Qt::red, QBrush(Qt::NoBrush), minGrad / 2);
+        ui->fftPlot->DrawCircle(0, 0);
 
-        connect(ui->fftPlot, &ImagePlot::mousePress, this, &MainWindow::clickBraggSpot);
+        QMessageBox msgBox;
+        msgBox.setWindowTitle(tr("GPA"));
+        msgBox.setText(tr("Accept mask size?"));
+        msgBox.setInformativeText(tr("(Solid Lline)"));
+
+        QAbstractButton *btnManual = msgBox.addButton(tr("Manual"), QMessageBox::ActionRole);
+        QAbstractButton *btnRadius = msgBox.addButton(tr("Smallest g"), QMessageBox::ActionRole);
+        QAbstractButton *btnYes = msgBox.addButton(tr("Yes"), QMessageBox::YesRole);
+
+        msgBox.setIcon(QMessageBox::Question);
+        msgBox.exec();
+        //auto reply = QMessageBox::question(this, tr("GPA"), tr("Accept mask size?\n(The dashed circle should touch the smallest g-vector)"), QMessageBox::No | QMessageBox::Yes);
+
+        ui->fftPlot->clearAllItems();
+        ui->fftPlot->replot();
+
+        if (msgBox.clickedButton() == btnRadius)
+        {
+            happy = true;
+            updateStatusBar("Select the smallest g-vector on the FFT");
+            if (!minimalDialogs)
+                QMessageBox::information(this, tr("GPA"), tr("Select the smallest g-vector on the FFT"), QMessageBox::Ok);
+
+            connect(ui->fftPlot, &ImagePlot::mousePress, this, &MainWindow::clickGVector);
+        }
+        else if (msgBox.clickedButton() == btnManual)
+        {
+            updateStatusBar("Enter the desired mask size");
+            minGrad = QInputDialog::getDouble(this, tr("GPA"), tr("Mask size (3σ):"), minGrad, 0.0, 2147483647.0, 2);
+        }
+        else
+        {
+            happy = true;
+            phaseSelection = 0;
+            updateStatusBar("Select a g-vector on the FFT");
+            if (!minimalDialogs)
+                QMessageBox::information(this, tr("GPA"), tr("Select a g-vector on the FFT"), QMessageBox::Ok);
+
+            connect(ui->fftPlot, &ImagePlot::mousePress, this, &MainWindow::clickBraggSpot);
+        }
     }
 }
 
 void MainWindow::clickGVector(QMouseEvent *event)
 {
-    disconnect(ui->fftPlot, &ImagePlot::mousePress, this, &MainWindow::clickGVector);
-    updateStatusBar("--");
 
     double x = ui->fftPlot->xAxis->pixelToCoord(event->pos().x());
     double y = ui->fftPlot->yAxis->pixelToCoord(event->pos().y());
 
+    if(!ui->fftPlot->inAxis(x, y))
+        return;
+
+    disconnect(ui->fftPlot, &ImagePlot::mousePress, this, &MainWindow::clickGVector);
+    updateStatusBar("--");
+
     minGrad = std::sqrt(x*x+y*y);
 
-    ui->fftPlot->DrawCircle(0, 0, Qt::red, QBrush(Qt::NoBrush), minGrad);
+    ui->fftPlot->DrawCircle(0, 0, Qt::red, QBrush(Qt::NoBrush), minGrad, Qt::DotLine);
+    ui->fftPlot->DrawCircle(0, 0, Qt::red, QBrush(Qt::NoBrush), minGrad / 2);
     ui->fftPlot->DrawCircle(0, 0);
 
-    auto reply = QMessageBox::question(this, tr("GPA"), tr("Accept this radius?"), QMessageBox::No | QMessageBox::Yes);
-
-    ui->fftPlot->clearItems();
-    ui->fftPlot->replot();
-
-    if (reply == QMessageBox::No)
-    {
-        connect(ui->fftPlot, &ImagePlot::mousePress, this, &MainWindow::clickGVector);
-        return;
-    }
-    else
-    {
-        phaseSelection = 0;
-        updateStatusBar("Select a g-vector on the FFT");
-        QMessageBox::information(this, tr("GPA"), tr("Select a g-vector on the FFT"), QMessageBox::Ok);
-
-        connect(ui->fftPlot, &ImagePlot::mousePress, this, &MainWindow::clickBraggSpot);
-    }
+    AcceptGVector(minGrad);
 }
 
 void MainWindow::clickBraggSpot(QMouseEvent *event)
 {
-    disconnect(ui->fftPlot, &ImagePlot::mousePress, this, &MainWindow::clickBraggSpot);
-    updateStatusBar("--");
-
     // get coords of click
     double x = ui->fftPlot->xAxis->pixelToCoord(event->pos().x());
     double y = ui->fftPlot->yAxis->pixelToCoord(event->pos().y());
     
+    if(!ui->fftPlot->inAxis(x, y))
+        return;
+
+    disconnect(ui->fftPlot, &ImagePlot::mousePress, this, &MainWindow::clickBraggSpot);
+    updateStatusBar("--");
+
     // calculate optimal sigma [REF]
-    double sig = minGrad/(4*2.355);
+    _sig = minGrad/(2*3);
 
     QColor phaseCol;
 
@@ -322,9 +350,9 @@ void MainWindow::clickBraggSpot(QMouseEvent *event)
         phaseCol = Qt::red;
 
     ui->fftPlot->DrawCircle(x, y, phaseCol, QBrush(phaseCol));
-    ui->fftPlot->DrawCircle(x, y, phaseCol, QBrush(Qt::NoBrush), 3*sig); // assume here that 3sigma is the ask radius.
+    ui->fftPlot->DrawCircle(x, y, phaseCol, QBrush(Qt::NoBrush), 3*_sig); // assume here that 3sigma is the ask radius.
 
-    GPAstrain->calculatePhase(phaseSelection, x, y, sig);
+    GPAstrain->calculatePhase(phaseSelection, x, y, _sig);
 
     Eigen::MatrixXd ph = GPAstrain->getPhase(phaseSelection)->getWrappedPhase();
 
@@ -371,7 +399,8 @@ void MainWindow::continuePhase()
     { // if this is the first phase, select another.
         ++phaseSelection;
         updateStatusBar("Select another g-vector on the FFT");
-        QMessageBox::information(this, tr("GPA"), tr("Select another g-vector on the FFT"), QMessageBox::Ok);
+        if (!minimalDialogs)
+            QMessageBox::information(this, tr("GPA"), tr("Select another g-vector on the FFT"), QMessageBox::Ok);
         connect(ui->fftPlot, &ImagePlot::mousePress, this, &MainWindow::clickBraggSpot);
     }
     else
@@ -384,6 +413,9 @@ void MainWindow::continuePhase()
 
 void MainWindow::selectRefineArea()
 {
+    if(!minimalDialogs)
+        QMessageBox::information(this, tr("GPA"), tr("Select corners of refinement area on phase"), QMessageBox::Ok);
+
     if (phaseSelection != 0 && xCorner.size() == 2)
     {
         double top = std::max(yCorner[0], yCorner[1]);
@@ -401,7 +433,7 @@ void MainWindow::selectRefineArea()
         }
         else
         {
-            ui->imagePlot->clearItems();
+            ui->imagePlot->clearAllItems();
             ui->imagePlot->replot();
             xCorner.clear();
             yCorner.clear();
@@ -421,10 +453,14 @@ void MainWindow::selectRefineArea()
 
 void MainWindow::clickRectCorner(QMouseEvent *event)
 {
-    //check vector sies etc for error?
+    //check vector sizes etc for error?
 
     double x = ui->imagePlot->xAxis->pixelToCoord(event->pos().x());
     double y = ui->imagePlot->yAxis->pixelToCoord(event->pos().y());
+
+    // if coords outside image, ignore event
+    if (!ui->imagePlot->inAxis(x, y))
+        return;
 
     ui->imagePlot->DrawCircle(x, y);
 
@@ -447,14 +483,14 @@ void MainWindow::clickRectCorner(QMouseEvent *event)
 
         if (rect == QMessageBox::Yes)
         {
-            ui->imagePlot->clearItems();
+            ui->imagePlot->clearAllItems();
             ui->imagePlot->replot();
             doRefinement(top, left, bottom, right);
         }
         else
         {
             // clear figure
-            ui->imagePlot->clearItems();
+            ui->imagePlot->clearAllItems();
             ui->imagePlot->replot();
             xCorner.clear();
             yCorner.clear();
@@ -476,6 +512,25 @@ void MainWindow::doRefinement(double top, double left, double bottom, double rig
     int r = static_cast<int>(right) + colmid;
 
     GPAstrain->getPhase(phaseSelection)->refinePhase(t, l, b, r);
+
+    ui->fftPlot->clearAllItems();
+
+    if (phaseSelection == 0)
+    {
+        auto GVecPx = GPAstrain->getPhase(phaseSelection)->getGVectorPixels();
+        ui->fftPlot->DrawCircle(GVecPx.x, GVecPx.y, Qt::red, QBrush(Qt::red));
+        ui->fftPlot->DrawCircle(GVecPx.x, GVecPx.y, Qt::red, QBrush(Qt::NoBrush), 3*_sig);
+    }
+    else
+    {
+        auto GVecPx1 = GPAstrain->getPhase(0)->getGVectorPixels();
+        ui->fftPlot->DrawCircle(GVecPx1.x, GVecPx1.y, Qt::red, QBrush(Qt::red));
+        ui->fftPlot->DrawCircle(GVecPx1.x, GVecPx1.y, Qt::red, QBrush(Qt::NoBrush), 3*_sig);
+
+        auto GVecPx2 = GPAstrain->getPhase(phaseSelection)->getGVectorPixels();
+        ui->fftPlot->DrawCircle(GVecPx2.x, GVecPx2.y, Qt::blue, QBrush(Qt::blue));
+        ui->fftPlot->DrawCircle(GVecPx2.x, GVecPx2.y, Qt::blue, QBrush(Qt::NoBrush), 3*_sig);
+    }
 
     Eigen::MatrixXd ph = GPAstrain->getPhase(phaseSelection)->getWrappedPhase();
 
@@ -512,7 +567,7 @@ void MainWindow::getStrains()
 
     double angle = ui->angleSpin->value();
 
-    GPAstrain->calculateStrain(angle);
+    GPAstrain->calculateDistortion(angle);
     ui->exxPlot->SetImage(*(GPAstrain->getExx()), false);
     ui->exyPlot->SetImage(*(GPAstrain->getExy()), false);
     ui->eyxPlot->SetImage(*(GPAstrain->getEyx()), false);
@@ -592,6 +647,13 @@ void MainWindow::on_limitsSpin_editingFinished()
 void MainWindow::on_colourMapBox_currentIndexChanged(const QString &Map)
 {
     ui->colorBar->SetColorMap(Map);
+}
+
+void MainWindow::on_actionMinimal_dialogs_triggered()
+{
+    minimalDialogs = ui->actionMinimal_dialogs->isChecked();
+    QSettings settings;
+    settings.setValue("dialog/minimal", minimalDialogs);
 }
 
 void MainWindow::on_actionHann_triggered()

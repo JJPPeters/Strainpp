@@ -31,6 +31,8 @@ private:
 
     std::shared_ptr<fftw_plan> _FFTplan, _IFFTplan, _FFTdiffplan, _IFFTdiffplan;
 
+    double _angle;
+
 public:
 
     Phase(std::shared_ptr<Eigen::MatrixXcd> inputFFT, double gx, double gy, double sigma, std::shared_ptr<fftw_plan> forwardPlan, std::shared_ptr<fftw_plan> inversePlan);
@@ -51,11 +53,13 @@ public:
 
     Coord2D<double> getGVector();
 
+    Coord2D<double> getGVectorPixels();
+
+    void getDifferential(Eigen::MatrixXcd &dx, Eigen::MatrixXcd &dy, double angle);
+
     void getDifferential(Eigen::MatrixXcd &dx, Eigen::MatrixXcd &dy);
 
     void refinePhase(int t, int l, int b, int r);
-
-
 };
 
 #endif // PHASE_H

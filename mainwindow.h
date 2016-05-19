@@ -41,6 +41,8 @@ private slots:
 
     void on_actionHann_triggered();
 
+    void on_actionMinimal_dialogs_triggered();
+
     void on_leftCombo_currentIndexChanged(int index);
 
     void on_rightCombo_currentIndexChanged(int index);
@@ -65,6 +67,8 @@ private slots:
 private:
     Ui::MainWindow *ui;
 
+    bool minimalDialogs;
+
     Eigen::MatrixXcd original_image;
 
     QString dialogPath;
@@ -77,7 +81,7 @@ private:
 
     int phaseSelection;
 
-    double minGrad;
+    double minGrad, _sig;
 
     bool haveImage = false;
     bool haveStrains = false;
@@ -129,6 +133,8 @@ private:
     void getStrains();
 
     void updateOtherPlot(int index, int side, bool rePlot = true);
+
+    void AcceptGVector(double minGrad);
 
 };
 

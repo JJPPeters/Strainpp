@@ -77,16 +77,23 @@ private:
 
         JetLike_Map.clearColorStops();
 
+//        JetLike_Map.setColorStopAt(0.0, QColor(127, 0, 255));
+//        JetLike_Map.setColorStopAt(0.1, QColor(76, 79, 251));
+//        JetLike_Map.setColorStopAt(0.2, QColor(25, 150, 242));
+//        // JetLike_Map.setColorStopAt(0.325, QColor(24, 205, 227));
+//        JetLike_Map.setColorStopAt(0.3, QColor(76, 242, 206));
+//        JetLike_Map.setColorStopAt(0.5, QColor(127, 254, 179));
+//        JetLike_Map.setColorStopAt(0.7, QColor(178, 242, 149));
+//        // JetLike_Map.setColorStopAt(0.675, QColor(230, 205, 115));
+//        JetLike_Map.setColorStopAt(0.8, QColor(255, 150, 78));
+//        JetLike_Map.setColorStopAt(0.9, QColor(255, 79, 40));
+//        JetLike_Map.setColorStopAt(1.0, QColor(255, 0, 0));
+
         JetLike_Map.setColorStopAt(0.0, QColor(127, 0, 255));
-        JetLike_Map.setColorStopAt(0.1, QColor(76, 79, 251));
-        JetLike_Map.setColorStopAt(0.2, QColor(25, 150, 242));
-        JetLike_Map.setColorStopAt(0.325, QColor(24, 205, 227));
-        JetLike_Map.setColorStopAt(0.45, QColor(76, 242, 206));
-        JetLike_Map.setColorStopAt(0.5, QColor(127, 254, 179));
-        JetLike_Map.setColorStopAt(0.55, QColor(178, 242, 149));
-        JetLike_Map.setColorStopAt(0.675, QColor(230, 205, 115));
-        JetLike_Map.setColorStopAt(0.8, QColor(255, 150, 78));
-        JetLike_Map.setColorStopAt(0.9, QColor(255, 79, 40));
+        JetLike_Map.setColorStopAt(0.15, QColor(76, 79, 251));
+        JetLike_Map.setColorStopAt(0.4, QColor(76, 242, 206));
+        JetLike_Map.setColorStopAt(0.6, QColor(178, 242, 149));
+        JetLike_Map.setColorStopAt(0.85, QColor(255, 79, 40));
         JetLike_Map.setColorStopAt(1.0, QColor(255, 0, 0));
     }
 

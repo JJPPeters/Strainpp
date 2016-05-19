@@ -5,6 +5,7 @@
 
 Phase::Phase(std::shared_ptr<Eigen::MatrixXcd> inputFFT, double gx, double gy, double sigma, std::shared_ptr<fftw_plan> forwardPlan, std::shared_ptr<fftw_plan> inversePlan)
 {
+    _angle = 0;
     _FFT = inputFFT;
     _gxPx = gx;
     _gyPx = gy;
@@ -106,6 +107,12 @@ Eigen::MatrixXd Phase::getWrappedPhase()
     return _NormPhase;
 }
 
+void Phase::getDifferential(Eigen::MatrixXcd &dx, Eigen::MatrixXcd &dy, double angle)
+{
+    _angle = angle;
+    getDifferential(dx, dy);
+}
+
 void Phase::getDifferential(Eigen::MatrixXcd &dx, Eigen::MatrixXcd &dy)
 {
     dx = Eigen::MatrixXcd(_FFT->rows(), _FFT->cols());
@@ -165,6 +172,14 @@ void Phase::getDifferential(Eigen::MatrixXcd &dx, Eigen::MatrixXcd &dy)
             dx(i-1, j-1) = std::imag(ph * dx_kernel(i, j) / (nn*6));
             dy(i-1, j-1) = std::imag(ph * dy_kernel(i, j) / (nn*6));
         }
+
+    auto rotMat = UtilsMaths::MakeRotationMatrix(_angle);
+
+    Eigen::MatrixXcd temp;
+    temp = rotMat(0,0) * dx + rotMat(0,1) * dy;
+    dy = rotMat(1,0) * dx + rotMat(1,1) * dy;
+    dx = temp;
+
 }
 
 Coord2D<double> Phase::getGVector()
@@ -172,8 +187,15 @@ Coord2D<double> Phase::getGVector()
     return Coord2D<double>(_gx, _gy);
 }
 
+Coord2D<double> Phase::getGVectorPixels()
+{
+    return Coord2D<double>(_gxPx, _gyPx);
+}
+
 void Phase::refinePhase(int t, int l, int b, int r)
 {
+    // Here we use linear regression to find the gradient of the selected area,
+    // We then readjust the G-vectors to flatten this gradient.
     Eigen::MatrixXd area(t-b, r-l);
 
     for (int j = 0; j < t-b; ++j)
@@ -181,12 +203,13 @@ void Phase::refinePhase(int t, int l, int b, int r)
             area(j, i) = _NormPhase(j+b, i+l);
 
     Eigen::MatrixXd X(area.size(), 3);
-    for (int j = 0; j < area.rows(); ++j)
-        for (int i = 0; i < area.cols(); ++i)
+
+    for (int i = 0; i < area.cols(); ++i)
+        for (int j = 0; j < area.rows(); ++j)
         {
-            X(j + i*area.rows(), 0) = 1;
-            X(j + i*area.rows(), 1) = i;
-            X(j + i*area.rows(), 2) = j;
+            X(i + j*area.cols(), 0) = 1;
+            X(i + j*area.cols(), 1) = i;
+            X(i + j*area.cols(), 2) = j;
         }
 
     area.resize(area.size(), 1);
@@ -194,8 +217,8 @@ void Phase::refinePhase(int t, int l, int b, int r)
     // need rows == rows...
     Eigen::Vector3d C = X.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(area);
 
-    double dGxPx = C[1] / (2*PI) * area.cols();
-    double dGyPx = C[2] / (2*PI) * area.rows();
+    double dGxPx = C[1] / (2*PI) * _FFT->cols();
+    double dGyPx = C[2] / (2*PI) * _FFT->rows();
 
     _gxPx += dGxPx;
     _gyPx += dGyPx;

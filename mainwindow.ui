@@ -430,9 +430,16 @@
     </property>
     <addaction name="actionHann"/>
    </widget>
+   <widget class="QMenu" name="menuOptions">
+    <property name="title">
+     <string>Options</string>
+    </property>
+    <addaction name="actionMinimal_dialogs"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuStrain"/>
    <addaction name="menuWindow"/>
+   <addaction name="menuOptions"/>
   </widget>
   <widget class="QStatusBar" name="statusBar">
    <property name="enabled">
@@ -524,6 +531,14 @@
   <action name="actionExportAllBin">
    <property name="text">
     <string>Binary</string>
+   </property>
+  </action>
+  <action name="actionMinimal_dialogs">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Minimal dialogs</string>
    </property>
   </action>
  </widget>

@@ -2,7 +2,7 @@
 #include <iostream>
 
 GPA::GPA(Eigen::MatrixXcd img)
-{
+{    
     // initialise vectors
     _Phases.resize(2);
     _Image = std::make_shared<Eigen::MatrixXcd>(img);
@@ -148,25 +148,13 @@ std::shared_ptr<Phase> GPA::getPhase(int i)
     return _Phases[i];
 }
 
-Eigen::MatrixXd GPA::_GetRotationMatrix(double angle)
-{
-    Eigen::Matrix<double, 2, 2> rotmat;
-    angle *= PI/180;
-
-    rotmat(0, 0) = std::cos(angle);
-    rotmat(0, 1) = std::sin(angle);
-    rotmat(1, 0) = -1*std::sin(angle);
-    rotmat(1, 1) = std::cos(angle);
-
-    return rotmat;
-}
-
-void GPA::calculateStrain(double angle)
+void GPA::calculateDistortion(double angle)
 {
     Eigen::MatrixXcd d1dx, d1dy, d2dx, d2dy;
 
-    _Phases[0]->getDifferential(d1dx, d1dy);
-    _Phases[1]->getDifferential(d2dx, d2dy);
+    // get differential (rotated to coodinate system)
+    _Phases[0]->getDifferential(d1dx, d1dy, angle);
+    _Phases[1]->getDifferential(d2dx, d2dy, angle);
 
     //calculate A matrix (from G matrix)
     //here I do several steps in one go, but all I am doing is Inverse(Transpose(G)) = A
@@ -174,31 +162,24 @@ void GPA::calculateStrain(double angle)
     Coord2D<double> g1 = _Phases[0]->getGVector();
     Coord2D<double> g2 = _Phases[1]->getGVector();
 
-    A << g1.x, g2.x, -g1.y, -g2.y;
+    A << g1.x, g2.x, g1.y, g2.y;
     A = A.transpose().inverse();
-    A *= _GetRotationMatrix(angle);
+    // rotate the basis
+    A = UtilsMaths::MakeRotationMatrix(angle) * A;
 
     double factor = -1.0 / (2.0 * PI);
     _Exx = std::make_shared<Eigen::MatrixXd>( (factor * (A(0, 0) * d1dx + A(0, 1) * d2dx)).real() );
     _Exy = std::make_shared<Eigen::MatrixXd>( (factor * (A(0, 0) * d1dy + A(0, 1) * d2dy)).real() );
     _Eyx = std::make_shared<Eigen::MatrixXd>( (factor * (A(1, 0) * d1dx + A(1, 1) * d2dx)).real() );
     _Eyy = std::make_shared<Eigen::MatrixXd>( (factor * (A(1, 0) * d1dy + A(1, 1) * d2dy)).real() );
-
-    correctStrains();
 }
 
-void GPA::correctStrains()
+Eigen::MatrixXd GPA::getStrain()
 {
-    Eigen::MatrixXd ones;
-    ones.setOnes(_Image->rows(), _Image->cols());
+     return 0.5 * (*_Exy + *_Eyx);
+}
 
-    Eigen::MatrixXd a = ones - (*_Exx);
-    Eigen::MatrixXd b = (*_Exy);
-    Eigen::MatrixXd c = (*_Eyx);
-    Eigen::MatrixXd d = ones - (*_Eyy);
-    Eigen::MatrixXd bigD = a.cwiseProduct(d) - b.cwiseProduct(c);
-    _Exx = std::make_shared<Eigen::MatrixXd>( d.cwiseQuotient(bigD) - ones );
-    _Exy = std::make_shared<Eigen::MatrixXd>( -1 * b.cwiseQuotient(bigD) );
-    _Eyx = std::make_shared<Eigen::MatrixXd>( -1 * c.cwiseQuotient(bigD) );
-    _Eyy = std::make_shared<Eigen::MatrixXd>( a.cwiseQuotient(bigD) - ones );
+Eigen::MatrixXd GPA::getRotation()
+{
+    return 0.5 * (*_Exy - *_Eyx);
 }

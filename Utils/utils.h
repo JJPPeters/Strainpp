@@ -55,6 +55,19 @@ namespace UtilsFFT {
 
 namespace UtilsMaths {
 
+    static Eigen::MatrixXd MakeRotationMatrix(double angle)
+    {
+        Eigen::Matrix<double, 2, 2> rotmat;
+        angle *= PI/180;
+
+        rotmat(0, 0) = std::cos(angle);
+        rotmat(0, 1) = std::sin(angle);
+        rotmat(1, 0) = -1*std::sin(angle);
+        rotmat(1, 1) = std::cos(angle);
+
+        return rotmat;
+    }
+
     static double Distance(int x1, int y1, int x2, int y2)
     {
         return std::sqrt((x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2));
