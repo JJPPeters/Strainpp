@@ -427,6 +427,8 @@ void MainWindow::selectRefineArea()
         auto rect = QMessageBox::information(this, tr("Refine"), tr("Use same area?"), QMessageBox::Yes | QMessageBox::No);
         if (rect == QMessageBox::Yes)
         {
+            xCorner.clear();
+            yCorner.clear();
             doRefinement(top, left, bottom, right);
         }
         else
