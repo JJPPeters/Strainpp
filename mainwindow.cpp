@@ -251,10 +251,10 @@ void MainWindow::on_actionGPA_triggered()
 
     minGrad = GPAstrain->getGVectors();
 
-    AcceptGVector(minGrad);
+    AcceptGVector();
 }
 
-void MainWindow::AcceptGVector(double minGrad)
+void MainWindow::AcceptGVector()
 {
     bool happy = false;
     // I hate myself for this loop, but it is to avoid recursion with the manual entry
@@ -267,7 +267,7 @@ void MainWindow::AcceptGVector(double minGrad)
         QMessageBox msgBox;
         msgBox.setWindowTitle(tr("GPA"));
         msgBox.setText(tr("Accept mask size?"));
-        msgBox.setInformativeText(tr("(Solid Lline)"));
+        msgBox.setInformativeText(tr("(Solid Line)"));
 
         QAbstractButton *btnManual = msgBox.addButton(tr("Manual"), QMessageBox::ActionRole);
         QAbstractButton *btnRadius = msgBox.addButton(tr("Smallest g"), QMessageBox::ActionRole);
@@ -325,7 +325,7 @@ void MainWindow::clickGVector(QMouseEvent *event)
     ui->fftPlot->DrawCircle(0, 0, Qt::red, QBrush(Qt::NoBrush), minGrad / 2);
     ui->fftPlot->DrawCircle(0, 0);
 
-    AcceptGVector(minGrad);
+    AcceptGVector();
 }
 
 void MainWindow::clickBraggSpot(QMouseEvent *event)

@@ -136,7 +136,7 @@ private:
 
     void updateOtherPlot(int index, int side, bool rePlot = true);
 
-    void AcceptGVector(double minGrad);
+    void AcceptGVector();
 
 };
 
