@@ -756,8 +756,8 @@ void MainWindow::ExportAll(int choice)
         updateOtherPlot(i, 0, false);
         updateOtherPlot(i, 1, false);
 
-        ui->leftOtherPlot->ExportSelector(fileDir, "Phase1 " + ui->leftCombo->itemText(i), choice);
-        ui->rightOtherPlot->ExportSelector(fileDir, "Phase2 " + ui->rightCombo->itemText(i), choice);
+        ui->leftOtherPlot->ExportSelector(fileDir, "Phase1 " + ui->leftCombo->itemText(i).remove("/"), choice);
+        ui->rightOtherPlot->ExportSelector(fileDir, "Phase2 " + ui->rightCombo->itemText(i).remove("/"), choice);
     }
     // If I don't clear first it makes the image distorted
     ui->leftOtherPlot->clearImage();
