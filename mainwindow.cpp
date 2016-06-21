@@ -3,6 +3,10 @@
 
 #include "dmreader.h"
 
+#include <QPainter>
+#include <QtSvg/QSvgRenderer>
+#include <QPoint>
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -37,6 +41,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     statusBar()->addWidget(statusLabel);
 
+    on_angleSpin_editingFinished(); // this is just to update the axes image...
 
     // connect al the slots to update the strain images
     connect(ui->colorBar, SIGNAL(limitsChanged(double)), ui->exxPlot, SLOT(SetColorLimits(double)));
@@ -110,6 +115,12 @@ void MainWindow::openDM(std::string filename)
     int nx = dmFile.getX();
     int ny = dmFile.getY();
     int nz = dmFile.getZ();
+
+    if (nx < 3 || ny < 3)
+    {
+        QMessageBox::information(this, tr("File open"), tr("Image too small."), QMessageBox::Ok);
+        return;
+    }
 
     std::vector<double> image;
     if ( nz > 1)
@@ -562,6 +573,7 @@ void MainWindow::doRefinement(double top, double left, double bottom, double rig
     }
 }
 
+// probably poorly named since it does so much more
 void MainWindow::getStrains()
 {
     updateStatusBar("GPA completed!");
@@ -750,6 +762,9 @@ void MainWindow::ExportAll(int choice)
         ui->exxPlot->ExportSelector(fileDir, "Dilitation", choice);
     }
 
+    if (choice == 0)
+        ui->colorBar->ExportImage(fileDir, "ColourBar");
+
     // need to loop through and show images before exporting them from same plot
     for(int i = 0; i < ui->leftCombo->count(); ++i)
     {
@@ -806,6 +821,9 @@ void MainWindow::ExportStrains(int choice)
     {
         ui->exxPlot->ExportSelector(fileDir, "Dilitation", choice);
     }
+
+    if (choice == 0)
+        ui->colorBar->ExportImage(fileDir, "ColourBar");
 }
 
 void MainWindow::DisconnectAll()
@@ -830,6 +848,71 @@ void MainWindow::ClearImages()
 
 void MainWindow::on_angleSpin_editingFinished()
 {
+    // OK....
+    // This first part is very messy. But bear with me.
+    // The axes is actually an SVG file kept int the resource file "axesresource.qrc"
+
+    // simple, get the angle!
+    double angle = ui->angleSpin->value();
+
+    if (lastAngle == angle)
+        return;
+
+    lastAngle = angle;
+
+    // These are to account for the size of the text
+    // there might be a better way using rects and setting the alignment to centre
+    // but I can't be botthered to work it out
+    QPoint ysz(-3, 4.5);
+    QPoint xsz(-3, 3);
+    // This is the size of our area to draw in
+    QSize size(100, 100);
+    // This is the pixmap that will eventually be shown, we start with it transparent
+    QPixmap newmap(size);
+    newmap.fill(Qt::transparent);
+    // this is the midpoint of our image (so we can rotate around it)
+    QPoint mid(size.height()/2, size.width()/2);
+    // this is the position of our labels
+    QPoint xp(65, 65);
+    QPoint yp(35, 35);
+
+    // here we rotate these positions about the mid point
+    xp = xp - mid;
+    yp = yp - mid;
+    QTransform temp;
+    QTransform tform = temp.rotate(-angle);
+
+    xp = tform.map(xp);
+    yp = tform.map(yp);
+    xp = xp + mid;
+    yp = yp + mid;
+
+    // set the font and colours
+    QFont tFont("Arial", 12, QFont::Normal);
+    QPen xPen(QColor("#E30513"));
+    QPen yPen(QColor("#008D36"));
+
+    // here we load the svg from the resource file
+    QSvgRenderer renderer(QString(":/Images/axes.svg"));
+    QPainter* p = new QPainter(&newmap);
+    //draw the texts (we have rotated the POSITION before)
+    p->setFont(tFont);
+    p->setPen(xPen);
+    p->drawText(xp + xsz, "x");
+    p->setPen(yPen);
+    p->drawText(yp + ysz, "y");
+    // now rotate the svg about hte mid point and draw it
+    p->translate(size.height()/2,size.height()/2);
+    p->rotate(-angle);
+    p->translate(-size.height()/2,-size.height()/2);
+    renderer.render(p);
+    // done, phew...
+    p->end();
+
+    // finally set it
+    ui->lblAxes->setPixmap(newmap);
+
+    // now do the calculation if we need to
     if(!haveStrains)
         return;
 
@@ -838,6 +921,43 @@ void MainWindow::on_angleSpin_editingFinished()
 
 void MainWindow::on_resultModeBox_currentIndexChanged(const QString &mode)
 {
+    // set the labels on the image
+    if (mode == "Distortion")
+    {
+        ui->exxLabel->setText("e<sub>xx</sub>");
+        ui->exyLabel->setText("e<sub>xy</sub>");
+        ui->eyxLabel->setText("e<sub>yx</sub>");
+        ui->eyyLabel->setText("e<sub>yy</sub>");
+        ui->exyLabel->setVisible(true);
+        ui->eyxLabel->setVisible(true);
+        ui->eyyLabel->setVisible(true);
+    }
+    else if(mode == "Strain")
+    {
+        ui->exxLabel->setText("ε<sub>xx</sub>");
+        ui->exyLabel->setText("ε<sub>xy</sub>");
+        ui->eyxLabel->setText("ε<sub>yx</sub>");
+        ui->eyyLabel->setText("ε<sub>yy</sub>");
+        ui->exyLabel->setVisible(true);
+        ui->eyxLabel->setVisible(true);
+        ui->eyyLabel->setVisible(true);
+    }
+    else if(mode == "Rotation")
+    {
+        ui->exxLabel->setText("ω<sub>xx</sub>");
+        ui->eyyLabel->setText("ω<sub>yy</sub>");
+        ui->exyLabel->setVisible(false);
+        ui->eyxLabel->setVisible(false);
+        ui->eyyLabel->setVisible(true);
+    }
+    else if(mode == "Dilitation")
+    {
+        ui->exxLabel->setText("Δ");
+        ui->exyLabel->setVisible(false);
+        ui->eyxLabel->setVisible(false);
+        ui->eyyLabel->setVisible(false);
+    }
+
     if(!haveStrains)
         return;
 

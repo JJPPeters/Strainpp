@@ -7,7 +7,7 @@
 RC_FILE = Strainpp.rc
 CONFIG += c++14
 
-QT       += core gui
+QT       += core gui svg
 QMAKE_CXXFLAGS_RELEASE += -O3
 QMAKE_CXXFLAGS += -fopenmp
 LIBS += -fopenmp
@@ -64,3 +64,6 @@ DEPENDPATH += $$PWD/../../../Programming/Cpp/msys64/usr/local/include
 
 win32:!win32-g++: PRE_TARGETDEPS += $$PWD/../../../Programming/Cpp/msys64/usr/local/lib/tiff.lib
 else:win32-g++: PRE_TARGETDEPS += $$PWD/../../../Programming/Cpp/msys64/usr/local/lib/libtiff.a
+
+RESOURCES += \
+    axesresource.qrc

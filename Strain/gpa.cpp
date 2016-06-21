@@ -98,6 +98,9 @@ int GPA::getGVectors()
         averages.push_back(av);
     }
 
+    if(averages.size() < 1)
+        return std::min(xs, ys) / 2;
+
     // normalise
     auto minIterator = std::min_element(averages.begin(), averages.end());
     double min = *minIterator;

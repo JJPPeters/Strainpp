@@ -14,6 +14,9 @@ signals:
 public:
     ColorBarPlot(QWidget *parent = 0) : QCustomPlot(parent)
     {
+        setContextMenuPolicy(Qt::CustomContextMenu);
+        setFocusPolicy(Qt::StrongFocus);
+
         ColorBar = new QCPColorScale(this);
 
         // remove  the crap we don't want
@@ -24,6 +27,8 @@ public:
         //ColorBar->axis()->setLabel("Strain");
 
         CreateColorMaps();
+
+        connect(this, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(contextMenuRequest(QPoint)));
     }
 
     void SetColorMap(const QString &Map)
@@ -95,6 +100,49 @@ private:
         JetLike_Map.setColorStopAt(0.6, QColor(178, 242, 149));
         JetLike_Map.setColorStopAt(0.85, QColor(255, 79, 40));
         JetLike_Map.setColorStopAt(1.0, QColor(255, 0, 0));
+    }
+
+private slots:
+    void contextMenuRequest(QPoint pos)
+    {
+        QMenu* menu = new QMenu(this);
+
+        menu->addAction("Export RGB", this, SLOT(ExportImage()));
+
+        menu->popup(mapToGlobal(pos));
+    }
+
+public slots:
+    void ExportImage()
+    {
+        QSettings settings;
+
+        // get path
+        QString filepath = QFileDialog::getSaveFileName(this, "Save image", settings.value("dialog/currentSavePath").toString(), "TIFF (*.tif)");
+
+        if (filepath.isEmpty())
+            return;
+
+        QFileInfo temp_file(filepath);
+        settings.setValue("dialog/currentSavePath", temp_file.path());
+
+        ExportImage(filepath);
+    }
+
+    void ExportImage(QString directory, QString filename)
+    {
+        QString filepath = QDir(directory).filePath(filename);
+        filepath += ".tif";
+
+        ExportImage(filepath);
+    }
+
+    void ExportImage(QString filepath)
+    {
+        int w = width();
+
+        std::string format = "TIFF";
+        saveRastered(filepath, w, 512, 1.0, format.c_str());
     }
 
 };

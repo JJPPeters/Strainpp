@@ -10,6 +10,10 @@ const double PI = 3.14159265358979323846;
 #define EIGEN_DEFAULT_TO_ROW_MAJOR
 #endif
 
+#ifndef EIGEN_INITIALIZE_MATRICES_BY_ZERO
+#define EIGEN_INITIALIZE_MATRICES_BY_ZERO
+#endif
+
 #include <memory>
 #include <complex>
 #include <algorithm>

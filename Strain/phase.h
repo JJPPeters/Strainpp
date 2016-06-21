@@ -5,6 +5,10 @@
 #define EIGEN_DEFAULT_TO_ROW_MAJOR
 #endif
 
+#ifndef EIGEN_INITIALIZE_MATRICES_BY_ZERO
+#define EIGEN_INITIALIZE_MATRICES_BY_ZERO
+#endif
+
 #ifndef PI_H
 #define PI_H
 const double PI = 3.14159265358979323846;

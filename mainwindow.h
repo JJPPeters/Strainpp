@@ -5,9 +5,14 @@
 #define EIGEN_DEFAULT_TO_ROW_MAJOR
 #endif
 
+#ifndef EIGEN_INITIALIZE_MATRICES_BY_ZERO
+#define EIGEN_INITIALIZE_MATRICES_BY_ZERO
+#endif
+
 #include <QMainWindow>
 #include <complex>
 #include <QtWidgets/QLabel>
+#include <QMessageBox>
 
 #include "fftw3.h"
 #include "tiffio.h"
@@ -15,6 +20,7 @@
 #include <Eigen/Dense>
 #include "gpa.h"
 #include <iostream>
+
 
 namespace Ui {
 class MainWindow;
@@ -73,15 +79,17 @@ private:
 
     Eigen::MatrixXcd original_image;
 
-    QString dialogPath;
-
     std::unique_ptr<GPA> GPAstrain;
+
+    QString dialogPath;
 
     std::vector<double> xCorner, yCorner;
 
     QLabel *statusLabel;
 
     int phaseSelection;
+
+    double lastAngle;
 
     double minGrad, _sig;
 
@@ -107,6 +115,14 @@ private:
         scanline = TIFFScanlineSize(tif);
         buf = _TIFFmalloc(scanline);
         Eigen::MatrixXcd complexImage(imagelength, scanline/sizeof(T));
+
+        // image too small to differentiate
+        if (imagelength < 3 || scanline/sizeof(T) < 3)
+        {
+            QMessageBox::information(this, tr("File open"), tr("Image too small."), QMessageBox::Ok);
+            return;
+        }
+
         for (uint32 row = 0; row < imagelength; ++row)
         {
             TIFFReadScanline(tif, buf, row);
@@ -118,8 +134,8 @@ private:
         }
 
         _TIFFfree(buf);
-        original_image = complexImage;
-        showImageAndFFT(complexImage);
+        original_image = complexImage.colwise().reverse();
+        showImageAndFFT(original_image);
     }
 
     void openDM(std::string filename);

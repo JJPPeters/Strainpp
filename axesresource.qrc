@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/Images">
+        <file>axes.svg</file>
+    </qresource>
+</RCC>

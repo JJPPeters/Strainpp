@@ -5,6 +5,10 @@
 #define EIGEN_DEFAULT_TO_ROW_MAJOR
 #endif
 
+#ifndef EIGEN_INITIALIZE_MATRICES_BY_ZERO
+#define EIGEN_INITIALIZE_MATRICES_BY_ZERO
+#endif
+
 #include <memory>
 #include <cmath>
 #include "fftw3.h"

@@ -5,6 +5,10 @@
 #define EIGEN_DEFAULT_TO_ROW_MAJOR
 #endif
 
+#ifndef EIGEN_INITIALIZE_MATRICES_BY_ZERO
+#define EIGEN_INITIALIZE_MATRICES_BY_ZERO
+#endif
+
 #include <complex>
 #include <memory>
 #include <cmath>
@@ -35,6 +39,7 @@ public:
     {
         setInteractions(QCP::iRangeZoom);
         setContextMenuPolicy(Qt::CustomContextMenu);
+        setFocusPolicy(Qt::StrongFocus);
 
         // this will remove all the crud but keep the grid lines
         xAxis->setSubTickPen(Qt::NoPen);
@@ -85,6 +90,8 @@ public:
         if (sx*sy != (int)image.size())
             throw sizeError;
 
+        clearImage();
+
         AspectRatio = (double)sx/(double)sy;
 
         rescaleAxes();
@@ -121,7 +128,12 @@ public:
         if (sx*sy != (int)image.size())
             throw sizeError;
 
+        clearImage();
+
         AspectRatio = (double)sx/(double)sy;
+
+        rescaleAxes();
+        setImageRatio();
 
         ImageObject = new QCPColorMap(xAxis, yAxis);
         addPlottable(ImageObject);
@@ -340,9 +352,12 @@ private slots:
 
         QMenu* saveMenu = new QMenu("Export...", this);
 
-        saveMenu->addAction("RGB image", this,  SLOT(ExportImage()));
-        saveMenu->addAction("Data image", this,  SLOT(ExportData()));
-        saveMenu->addAction("Binary", this,  SLOT(ExportBinary()));
+        QAction* expIm = saveMenu->addAction("RGB image", this,  SLOT(ExportImage()));
+        expIm->setEnabled(haveImage);
+        QAction* expDat = saveMenu->addAction("Data image", this,  SLOT(ExportData()));
+        expDat->setEnabled(haveImage);
+        QAction* expBin = saveMenu->addAction("Binary", this,  SLOT(ExportBinary()));
+        expBin->setEnabled(haveImage);
 
         menu->addMenu(saveMenu);
 
