@@ -30,7 +30,7 @@
        </sizepolicy>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tabImage">
        <attribute name="title">
@@ -274,7 +274,7 @@
            </layout>
           </item>
           <item>
-           <layout class="QGridLayout" name="gridLayout_3" columnstretch="0,0,0" rowminimumheight="1,1" columnminimumwidth="1,1,0">
+           <layout class="QGridLayout" name="gridLayout_3" columnstretch="0,0,0">
             <item row="1" column="0">
              <widget class="ImagePlot" name="eyxPlot" native="true">
               <layout class="QFormLayout" name="formLayout_3">
@@ -428,28 +428,6 @@
               </layout>
              </widget>
             </item>
-            <item row="0" column="2">
-             <widget class="ColorBarPlot" name="colorBar" native="true">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>100</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>16777215</height>
-               </size>
-              </property>
-             </widget>
-            </item>
             <item row="1" column="1">
              <widget class="ImagePlot" name="eyyPlot" native="true">
               <layout class="QFormLayout" name="formLayout_4">
@@ -496,6 +474,31 @@
                 </widget>
                </item>
               </layout>
+             </widget>
+            </item>
+            <item row="0" column="2">
+             <widget class="ColorBarPlot" name="colorBar" native="true">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>100</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="autoFillBackground">
+               <bool>false</bool>
+              </property>
              </widget>
             </item>
             <item row="1" column="2">
@@ -646,7 +649,7 @@
      <x>0</x>
      <y>0</y>
      <width>846</width>
-     <height>20</height>
+     <height>19</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

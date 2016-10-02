@@ -390,7 +390,7 @@ private slots:
         // the Axes are all screwed but this seems to work
         // needed to export the right area
         xAxis->setRange(QCPRange(-size_x/2, size_x/2));
-        yAxis->setRange(QCPRange(-size_y/2-1, size_y/2+2));
+        yAxis->setRange(QCPRange(-size_y/2-1, size_y/2+1));
         saveRastered(filepath, size_x, size_y, 1.0, format.c_str());
 
         xAxis->setRange(xr);

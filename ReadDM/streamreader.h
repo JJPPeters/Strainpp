@@ -30,7 +30,11 @@ namespace DMRead
 
         void closeStream()
         {
-            fclose(filePtr);
+            if (filePtr != NULL)
+            {
+                fclose(filePtr);
+                filePtr = NULL;
+            }
         }
 
         template<typename T>

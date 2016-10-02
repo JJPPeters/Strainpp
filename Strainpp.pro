@@ -20,21 +20,25 @@ TEMPLATE = app
 INCLUDEPATH += ReadDM \
     Plotting \
     Utils \
-    Strain \
-    D:\Programming\Cpp\boost_1_57_0 \
-    D:\Programming\Cpp\qcustomplot \
-    D:\Programming\Cpp\FFTW3 \
-    D:\Programming\Cpp\eigen3.28 \
+    Strain
+
+win32: INCLUDEPATH += D:\Programming\Cpp\qcustomplot \
+    D:\Programming\Cpp\eigen3.28
+
+unix:!macx: INCLUDEPATH += /home/jon/Programming/qcustomplot \
+    /home/jon/Programming/eigen_3.2.9
 
 SOURCES += main.cpp\
-        mainwindow.cpp \
-    ../../../Programming/Cpp/qcustomplot/qcustomplot.cpp \
+    mainwindow.cpp \
     Strain/phase.cpp \
     Strain/gpa.cpp \
     Utils/exceptions.cpp
 
+win32: SOURCES += D:\Programming\Cpp\qcustomplot\qcustomplot.cpp
+
+unix:!macx: SOURCES += /home/jon/Programming/qcustomplot/qcustomplot.cpp
+
 HEADERS  += mainwindow.h \
-    ../../../Programming/Cpp/qcustomplot/qcustomplot.h \
     Plotting/imageplot.h \
     ui_mainwindow.h \
     Utils/exceptions.h \
@@ -48,14 +52,19 @@ HEADERS  += mainwindow.h \
     Utils/coord.h \
     Plotting/colorbarplot.h
 
+win32: HEADERS += D:\Programming\Cpp\qcustomplot\qcustomplot.h
+
+unix:!macx: HEADERS += /home/jon/Programming/qcustomplot/qcustomplot.h
+
 FORMS    += mainwindow.ui
+
+RESOURCES += \
+    axesresource.qrc
 
 win32: LIBS += -L$$PWD/../../../Programming/Cpp/FFTW3/ -llibfftw3-3
 
-# INCLUDEPATH += $$PWD/../../../Programming/Cpp/FFTW3
+INCLUDEPATH += $$PWD/../../../Programming/Cpp/FFTW3
 DEPENDPATH += $$PWD/../../../Programming/Cpp/FFTW3
-
-DISTFILES +=
 
 win32: LIBS += -L$$PWD/../../../Programming/Cpp/msys64/usr/local/lib/ -ltiff
 
@@ -65,5 +74,12 @@ DEPENDPATH += $$PWD/../../../Programming/Cpp/msys64/usr/local/include
 win32:!win32-g++: PRE_TARGETDEPS += $$PWD/../../../Programming/Cpp/msys64/usr/local/lib/tiff.lib
 else:win32-g++: PRE_TARGETDEPS += $$PWD/../../../Programming/Cpp/msys64/usr/local/lib/libtiff.a
 
-RESOURCES += \
-    axesresource.qrc
+unix:!macx: LIBS += -L/usr/lib/x86_64-linux-gnu/ -lfftw3
+
+INCLUDEPATH += /usr/include
+DEPENDPATH += /usr/include
+
+unix:!macx: LIBS += -L/usr/lib/x86_64-linux-gnu/ -ltiff
+
+INCLUDEPATH += /usr/include/x86_64-linux-gnu
+DEPENDPATH += /usr/include/x86_64-linux-gnu

@@ -39,6 +39,10 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->colorBar->SetColorMap(ui->colourMapBox->currentText());
     ui->colorBar->SetLimits(ui->limitsSpin->value());
 
+    // this makes the background of the container of the color bar transparent
+    ui->colorBar->setAttribute(Qt::WA_OpaquePaintEvent, false);
+    ui->colorBar->setBackground(QBrush(QColor(255,255,255,0)));
+
     statusBar()->addWidget(statusLabel);
 
     on_angleSpin_editingFinished(); // this is just to update the axes image...
@@ -128,7 +132,7 @@ void MainWindow::openDM(std::string filename)
     else
         image = dmFile.getImage();
 
-    dmFile.close();;
+    dmFile.close();
 
     // image is complex for FFTing later
     Eigen::MatrixXcd complexImage(ny, nx);
