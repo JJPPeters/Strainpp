@@ -715,6 +715,9 @@
    <property name="enabled">
     <bool>false</bool>
    </property>
+   <property name="styleSheet">
+    <string notr="true">QStatusBar::item { border: 0px}</string>
+   </property>
   </widget>
   <action name="actionOpen">
    <property name="text">
