@@ -51,16 +51,12 @@ public:
         yAxis->setTickLabels(false);
         yAxis->setBasePen(Qt::NoPen);
 
+
         // to get origin in centre
         xAxis->setRange(-500, 500);
         yAxis->setRange(-500, 500);
 
-        // make the colours look nice
-        QPen axesPen = QPen(Qt::DashLine);
-        axesPen.setColor(Qt::white);
-        setBackground(QBrush(QColor(230, 230, 230)));
-        xAxis->grid()->setPen(axesPen);
-        yAxis->grid()->setPen(axesPen);
+        matchPlotToPalette();
 
         axisRect()->setAutoMargins(QCP::msNone);
         axisRect()->setMinimumMargins(QMargins(0,0,0,0));
@@ -69,6 +65,36 @@ public:
         connect(this, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(contextMenuRequest(QPoint)));
     }
 
+    // this is used to update the colours by filtering the events
+    bool event(QEvent *event)
+    {
+        // this might get spammed a bit, not sure if it is supposed to
+        if (event->type() == QEvent::PaletteChange)
+        {
+            matchPlotToPalette();
+            replot();
+        }
+
+        // very important or no other events will get through
+        return QCustomPlot::event(event);
+    }
+
+    void matchPlotToPalette()
+    {
+        QPalette pal = qApp->palette();
+        QPen axesPen = QPen(Qt::DashLine);
+        axesPen.setColor(pal.color(QPalette::Dark));
+
+        setBackground(qApp->palette().brush(QPalette::Background));
+        xAxis->grid()->setPen(axesPen);
+        yAxis->grid()->setPen(axesPen);
+
+        QPen zeroPen = QPen(Qt::SolidLine);
+        zeroPen.setColor(pal.color(QPalette::Mid));
+
+        xAxis->grid()->setZeroLinePen(zeroPen);
+        yAxis->grid()->setZeroLinePen(zeroPen);
+    }
 
     void SetImage(const Eigen::MatrixXd& image, bool doReplot = true)
     {
@@ -338,6 +364,11 @@ public slots:
 
     void ResetAxes()
     {
+        if(!haveImage)
+        {
+            xAxis->setRange(-500, 500);
+            yAxis->setRange(-500, 500);
+        }
         rescaleAxes();
         setImageRatio();
         replot();
