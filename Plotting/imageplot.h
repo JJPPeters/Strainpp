@@ -83,13 +83,14 @@ public:
     {
         QPalette pal = qApp->palette();
         QPen axesPen = QPen(Qt::DashLine);
-        axesPen.setColor(pal.color(QPalette::Dark));
+        axesPen.setColor(pal.color(QPalette::Mid));
 
         setBackground(qApp->palette().brush(QPalette::Background));
         xAxis->grid()->setPen(axesPen);
         yAxis->grid()->setPen(axesPen);
 
         QPen zeroPen = QPen(Qt::SolidLine);
+        zeroPen.setWidth(2);
         zeroPen.setColor(pal.color(QPalette::Mid));
 
         xAxis->grid()->setZeroLinePen(zeroPen);
