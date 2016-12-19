@@ -130,13 +130,14 @@ void Phase::getDifferential(Eigen::MatrixXcd &dx, Eigen::MatrixXcd &dy)
     // fill kernels with pre fft shifted data
     for (int i = 0; i < 3; ++i)
     {
-        // should all be divided by 6 (this is not done later)
+        // should all be divided by 6 (this is now done later)
 
         dx_kernel(i, 0) = 1;
         dx_kernel(i, 2) = -1;
-        // our image is 'upside down' so with flip this kernel
-        dy_kernel(0, i) = -1;
-        dy_kernel(2, i) = 1;
+        // do not need to correct for image direction like I said before
+        // that was stupid... (thanks Dr Benedykt R. Jany)
+        dy_kernel(0, i) = 1;
+        dy_kernel(2, i) = -1;
     }
 
     // create padded exponential phase matrix
