@@ -615,11 +615,11 @@ void MainWindow::getStrains()
 
     double lim =  ui->colorBar->GetLimits().upper;
 
-    emit(ui->colorBar->limitsChanged(lim));
+    emit ui->colorBar->limitsChanged(lim);
 
     QCPColorGradient map = ui->colorBar->GetColorMap();
 
-    emit(ui->colorBar->mapChanged(map));
+    emit ui->colorBar->mapChanged(map);
 
     updateOtherPlot(ui->leftCombo->currentIndex(), 0);
     updateOtherPlot(ui->rightCombo->currentIndex(), 1);

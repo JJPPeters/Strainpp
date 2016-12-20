@@ -31,6 +31,34 @@ enum ShowComplex{
 
 typedef std::map<std::string, std::map<std::string, std::string>>::iterator it_type;
 
+class QCPDataColorMap;
+class QCPDataColorMapData;
+
+// These two classes are here because I want access to the data displayed in the plots (I could just have a container for it 
+// but it is already being stored in the plot. Why duplicate it?)
+
+// friend status is not inherited so i inherit the data class and force it to be friendly :D
+class QCPDataColorMapData : public QCPColorMapData
+{
+    friend class QCPDataColorMap;
+};
+
+// now this friendly class can access the protected data pointer!!!
+class QCPDataColorMap : public QCPColorMap
+{
+public:
+
+    QCPDataColorMap(QCPAxis *keyAxis, QCPAxis *valueAxis) : QCPColorMap(keyAxis, valueAxis) {}
+
+    double* getDataArray()
+    {
+        return mMapData->mData;
+    }
+
+protected:
+    QCPDataColorMapData *mMapData;
+};
+
 class ImagePlot : public QCustomPlot
 {
     Q_OBJECT
@@ -124,7 +152,7 @@ public:
         rescaleAxes();
         setImageRatio();
 
-        ImageObject = new QCPColorMap(xAxis, yAxis);
+        ImageObject = new QCPDataColorMap(xAxis, yAxis);
         addPlottable(ImageObject);
         ImageObject->setGradient(QCPColorGradient::gpGrayscale); // default
         ImageObject->setInterpolate(false);
@@ -162,7 +190,7 @@ public:
         rescaleAxes();
         setImageRatio();
 
-        ImageObject = new QCPColorMap(xAxis, yAxis);
+        ImageObject = new QCPDataColorMap(xAxis, yAxis);
         addPlottable(ImageObject);
         ImageObject->setGradient(QCPColorGradient::gpGrayscale); // default
         ImageObject->setInterpolate(false);
@@ -263,7 +291,7 @@ public:
     }
 
 private:
-    QCPColorMap *ImageObject;
+    QCPDataColorMap *ImageObject;
 
     bool haveImage = false;
 
@@ -469,7 +497,7 @@ private slots:
 
        // virtually nothing supports 64-bit tiff so we will convert it here.
        std::vector<float> buffer(size_x*size_y);
-       double* data_temp = ImageObject->data()->getDataArray();
+       double* data_temp = ImageObject->getDataArray();
 
        for (int i = 0; i < size_x*size_y; ++i)
            buffer[i] = (float)data_temp[i];
@@ -503,7 +531,7 @@ private slots:
         if(!out)
             std::cerr << "Unable to write binary file" << std::endl;
 
-        out.write((char *) ImageObject->data()->getDataArray(), size_x*size_y*sizeof(double));
+        out.write((char *) ImageObject->getDataArray(), size_x*size_y*sizeof(double));
 
         out.close();
     }
