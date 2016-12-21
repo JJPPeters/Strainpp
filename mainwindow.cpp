@@ -932,6 +932,7 @@ void MainWindow::on_resultModeBox_currentIndexChanged(const QString &mode)
         ui->exyLabel->setText("e<sub>xy</sub>");
         ui->eyxLabel->setText("e<sub>yx</sub>");
         ui->eyyLabel->setText("e<sub>yy</sub>");
+        ui->exxLabel->setVisible(true);
         ui->exyLabel->setVisible(true);
         ui->eyxLabel->setVisible(true);
         ui->eyyLabel->setVisible(true);
@@ -942,24 +943,27 @@ void MainWindow::on_resultModeBox_currentIndexChanged(const QString &mode)
         ui->exyLabel->setText("ε<sub>xy</sub>");
         ui->eyxLabel->setText("ε<sub>yx</sub>");
         ui->eyyLabel->setText("ε<sub>yy</sub>");
+        ui->exxLabel->setVisible(true);
         ui->exyLabel->setVisible(true);
         ui->eyxLabel->setVisible(true);
         ui->eyyLabel->setVisible(true);
     }
     else if(mode == "Rotation")
     {
-        ui->exxLabel->setText("ω<sub>xx</sub>");
-        ui->eyyLabel->setText("ω<sub>yy</sub>");
-        ui->exyLabel->setVisible(false);
-        ui->eyxLabel->setVisible(false);
-        ui->eyyLabel->setVisible(true);
+        ui->exyLabel->setText("ω<sub>xy</sub>");
+        ui->eyxLabel->setText("ω<sub>yx</sub>");
+        ui->exxLabel->setVisible(false);
+        ui->exyLabel->setVisible(true);
+        ui->eyxLabel->setVisible(true);
+        ui->eyyLabel->setVisible(false);
     }
     else if(mode == "Dilitation")
     {
-        ui->exxLabel->setText("Δ");
+        ui->exxLabel->setVisible(true);
         ui->exyLabel->setVisible(false);
         ui->eyxLabel->setVisible(false);
         ui->eyyLabel->setVisible(false);
+        ui->exxLabel->setText("Δ");
     }
 
     if(!haveStrains)
