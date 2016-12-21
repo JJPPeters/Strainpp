@@ -191,7 +191,7 @@ void GPA::calculateDistortion(double angle, std::string mode)
     }
     else if (mode == "Dilitation")
     {
-        _Exx = std::make_shared<Eigen::MatrixXd>(*_Exx - *_Eyy);
+        _Exx = std::make_shared<Eigen::MatrixXd>(*_Exx + *_Eyy);
         _Exy = std::make_shared<Eigen::MatrixXd>( Eigen::MatrixXd::Constant(_Exx->rows(), _Exx->cols(), 0.0) );
         _Eyx = std::make_shared<Eigen::MatrixXd>( Eigen::MatrixXd::Constant(_Exx->rows(), _Exx->cols(), 0.0) );
         _Eyy = std::make_shared<Eigen::MatrixXd>( Eigen::MatrixXd::Constant(_Eyy->rows(), _Eyy->cols(), 0.0) );

@@ -31,32 +31,32 @@ enum ShowComplex{
 
 typedef std::map<std::string, std::map<std::string, std::string>>::iterator it_type;
 
-class QCPDataColorMap;
-class QCPDataColorMapData;
-
-// These two classes are here because I want access to the data displayed in the plots (I could just have a container for it 
-// but it is already being stored in the plot. Why duplicate it?)
-
-// friend status is not inherited so i inherit the data class and force it to be friendly :D
-class QCPDataColorMapData : public QCPColorMapData
-{
-    friend class QCPDataColorMap;
-};
-
-// now this friendly class can access the protected data pointer!!!
+// this wrapper class just serves to return a data array. I could just store an array, but it is
+// stored anyway and it is only needed for saving images.
 class QCPDataColorMap : public QCPColorMap
 {
 public:
 
     QCPDataColorMap(QCPAxis *keyAxis, QCPAxis *valueAxis) : QCPColorMap(keyAxis, valueAxis) {}
 
-    double* getDataArray()
+    std::vector<double> getDataArray()
     {
-        return mMapData->mData;
-    }
+        // key is x, value is y?
+        std::vector<double> output(data()->valueSize()*data()->keySize());
 
-protected:
-    QCPDataColorMapData *mMapData;
+        auto r1 = data()->keyRange();
+        auto r2 = data()->valueRange();
+
+        int counter = 0;
+        for (int i = r2.lower; i < r2.upper; ++i)
+            for (int j = r1.lower; j < r1.upper; ++j)
+            {
+                output[ counter ] = data()->data(j, i);
+                ++counter;
+            }
+
+        return output;
+    }
 };
 
 class ImagePlot : public QCustomPlot
@@ -497,7 +497,7 @@ private slots:
 
        // virtually nothing supports 64-bit tiff so we will convert it here.
        std::vector<float> buffer(size_x*size_y);
-       double* data_temp = ImageObject->getDataArray();
+       std::vector<double> data_temp = ImageObject->getDataArray();
 
        for (int i = 0; i < size_x*size_y; ++i)
            buffer[i] = (float)data_temp[i];
@@ -531,7 +531,9 @@ private slots:
         if(!out)
             std::cerr << "Unable to write binary file" << std::endl;
 
-        out.write((char *) ImageObject->getDataArray(), size_x*size_y*sizeof(double));
+        auto data = ImageObject->getDataArray();
+
+        out.write(reinterpret_cast<const char*>(&data[0]), data.size()*sizeof(double));
 
         out.close();
     }
