@@ -48,7 +48,7 @@ public:
         auto r2 = data()->valueRange();
 
         int counter = 0;
-        for (int i = r2.lower; i < r2.upper; ++i)
+        for (int i = r2.upper; i >= r2.lower; --i)
             for (int j = r1.lower; j < r1.upper; ++j)
             {
                 output[ counter ] = data()->data(j, i);
@@ -490,7 +490,7 @@ private slots:
        TIFFSetField(out, TIFFTAG_BITSPERSAMPLE, sizeof(float)*8);
        TIFFSetField(out, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_IEEEFP);
        TIFFSetField(out, TIFFTAG_ROWSPERSTRIP, size_y);
-       TIFFSetField(out, TIFFTAG_ORIENTATION, ORIENTATION_BOTLEFT);
+//       TIFFSetField(out, TIFFTAG_ORIENTATION, ORIENTATION_BOTLEFT);
        TIFFSetField(out, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
        TIFFSetField(out, TIFFTAG_COMPRESSION, COMPRESSION_NONE);
        TIFFSetField(out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
