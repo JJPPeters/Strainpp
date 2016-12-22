@@ -44,16 +44,10 @@ public:
         // key is x, value is y?
         std::vector<double> output(data()->valueSize()*data()->keySize());
 
-        auto r1 = data()->keyRange();
-        auto r2 = data()->valueRange();
-
-        int counter = 0;
-        for (int i = r2.upper; i >= r2.lower; --i)
-            for (int j = r1.lower; j < r1.upper; ++j)
-            {
-                output[ counter ] = data()->data(j, i);
-                ++counter;
-            }
+        // the odd indexing is because we need to export the image 'upside down'
+        for (int i = 0; i < data()->valueSize(); ++i)
+            for (int j = 0; j < data()->keySize(); ++j)
+                output[ i*data()->keySize() + j ] = data()->cell(j, data()->valueSize()-1-i);
 
         return output;
     }
