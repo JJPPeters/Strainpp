@@ -3,9 +3,9 @@
 
 #include "dmreader.h"
 
-#include <QPainter>
+//#include <QPainter>
 #include <QtSvg/QSvgRenderer>
-#include <QPoint>
+//#include <QPoint>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -19,10 +19,7 @@ MainWindow::MainWindow(QWidget *parent) :
         settings.setValue("dialog/currentPath", QStandardPaths::HomeLocation);
     if (!settings.contains("dialog/currentSavePath"))
         settings.setValue("dialog/currentSavePath", QStandardPaths::HomeLocation);
-    if (!settings.contains("dialog/minimal"))
-        minimalDialogs = false;
-    else
-        minimalDialogs = settings.value("dialog/minimal").toBool();
+    minimalDialogs = settings.contains("dialog/minimal") && settings.value("dialog/minimal").toBool();
 
     ui->setupUi(this);
 
@@ -60,6 +57,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     fftw_init_threads();
     fftw_plan_with_nthreads(omp_get_max_threads());
+    Eigen::setNbThreads(omp_get_max_threads()); // Not needed, just wanted to be verbose
 }
 
 
@@ -117,9 +115,9 @@ void MainWindow::on_actionOpen_triggered()
 
 void MainWindow::openDM(std::string filename)
 {
-    DMRead::DMReader dmFile(filename);
+    DMRead::DMReader dmFile(std::move(filename));
 
-    // get important inmage info
+    // get important image info
     int nx = dmFile.getX();
     int ny = dmFile.getY();
     int nz = dmFile.getZ();
@@ -157,10 +155,10 @@ void MainWindow::openDM(std::string filename)
 
 void MainWindow::openTIFF(std::string filename)
 {
-    TIFFSetWarningHandler(NULL);
+    TIFFSetWarningHandler(nullptr);
     TIFF* tif = TIFFOpen(filename.c_str(), "r");
 
-    if (!tif)
+    if (tif == nullptr)
     {
         QMessageBox::information(this, tr("File open"), tr("Error opening TIFF"), QMessageBox::Ok);
         return;
@@ -234,7 +232,7 @@ void MainWindow::showImageAndFFT(Eigen::MatrixXcd &image)
     catch (const std::exception& e)
     {
         QMessageBox messageBox;
-        messageBox.critical(0,"Error", e.what());
+        messageBox.critical(nullptr,"Error", e.what());
         return;
     }
 
@@ -246,7 +244,7 @@ void MainWindow::showImageAndFFT(Eigen::MatrixXcd &image)
     catch (const std::exception& e)
     {
         QMessageBox messageBox;
-        messageBox.critical(0,"Error", e.what());
+        messageBox.critical(nullptr,"Error", e.what());
         return;
     }
 
@@ -291,7 +289,7 @@ void MainWindow::AcceptGVector()
 
         QAbstractButton *btnManual = msgBox.addButton(tr("Manual"), QMessageBox::ActionRole);
         QAbstractButton *btnRadius = msgBox.addButton(tr("Smallest g"), QMessageBox::ActionRole);
-        QAbstractButton *btnYes = msgBox.addButton(tr("Yes"), QMessageBox::YesRole);
+        msgBox.addButton(tr("Yes"), QMessageBox::YesRole);
 
         msgBox.setIcon(QMessageBox::Question);
         msgBox.exec();
@@ -336,7 +334,7 @@ void MainWindow::clickGVector(QMouseEvent *event)
     if(!ui->fftPlot->inAxis(x, y))
         return;
 
-    disconnect(ui->fftPlot, SIGNAL(mousePress(QMouseEvent*)), 0, 0);
+    disconnect(ui->fftPlot, SIGNAL(mousePress(QMouseEvent*)), nullptr, nullptr);
     updateStatusBar("--");
 
     minGrad = std::sqrt(x*x+y*y);
@@ -357,7 +355,7 @@ void MainWindow::clickBraggSpot(QMouseEvent *event)
     if(!ui->fftPlot->inAxis(x, y))
         return;
 
-    disconnect(ui->fftPlot, SIGNAL(mousePress(QMouseEvent*)), 0, 0);
+    disconnect(ui->fftPlot, SIGNAL(mousePress(QMouseEvent*)), nullptr, nullptr);
     updateStatusBar("--");
 
     // calculate optimal sigma [REF]
@@ -384,7 +382,7 @@ void MainWindow::clickBraggSpot(QMouseEvent *event)
     catch (const std::exception& e)
     {
         QMessageBox messageBox;
-        messageBox.critical(0,"Error", e.what());
+        messageBox.critical(nullptr,"Error", e.what());
         return;
     }
 
@@ -408,7 +406,7 @@ void MainWindow::continuePhase()
     catch (const std::exception& e)
     {
         QMessageBox messageBox;
-        messageBox.critical(0,"Error", e.what());
+        messageBox.critical(nullptr,"Error", e.what());
         return;
     }
 
@@ -488,7 +486,7 @@ void MainWindow::clickRectCorner(QMouseEvent *event)
 
     if(xCorner.size() == 2)
     {
-        connect(ui->imagePlot, SIGNAL(mousePress(QMouseEvent*)), 0, 0);
+        disconnect(ui->imagePlot, SIGNAL(mousePress(QMouseEvent*)), nullptr, nullptr);
 
         double top = std::max(yCorner[0], yCorner[1]);
         double bottom = std::min(yCorner[0], yCorner[1]);
@@ -522,8 +520,8 @@ void MainWindow::clickRectCorner(QMouseEvent *event)
 
 void MainWindow::doRefinement(double top, double left, double bottom, double right)
 {
-    int rowmid = GPAstrain->getImage()->rows() / 2;
-    int colmid = GPAstrain->getImage()->cols() / 2;
+    int rowmid = static_cast<int>(GPAstrain->getImage()->rows() / 2);
+    int colmid = static_cast<int>(GPAstrain->getImage()->cols() / 2);
 
     int t = static_cast<int>(top) + rowmid;
     int b = static_cast<int>(bottom) + rowmid;
@@ -560,7 +558,7 @@ void MainWindow::doRefinement(double top, double left, double bottom, double rig
     catch (const std::exception& e)
     {
         QMessageBox messageBox;
-        messageBox.critical(0,"Error", e.what());
+        messageBox.critical(nullptr, "Error", e.what());
         return;
     }
 
@@ -659,6 +657,7 @@ void MainWindow::updateOtherPlot(int index, int side, bool rePlot)
     case 3 : image->SetImage(GPAstrain->getPhase(side)->getRawPhase(), rePlot); break;
     case 4 : image->SetImage(GPAstrain->getPhase(side)->getPhase(), rePlot); break;
     case 5 : image->SetImage(GPAstrain->getPhase(side)->getWrappedPhase(), rePlot); break;
+    default : break;
     }
     if (index == 6 || index== 7)
     {
@@ -668,7 +667,7 @@ void MainWindow::updateOtherPlot(int index, int side, bool rePlot)
         GPAstrain->getPhase(side)->getDifferential(dx, dy);
         if (index == 6)
             image->SetImage(dx, ShowComplex::Real, rePlot);
-        else if (index == 7)
+        else
             image->SetImage(dy, ShowComplex::Real, rePlot);
     }
     else if (index == -1)
@@ -838,8 +837,8 @@ void MainWindow::DisconnectAll()
 //    disconnect(ui->fftPlot, &ImagePlot::mousePress, this, &MainWindow::clickGVector);
 //    disconnect(ui->imagePlot, &ImagePlot::mousePress, this, &MainWindow::clickRectCorner);
 
-    disconnect(ui->fftPlot, SIGNAL(mousePress(QMouseEvent*)), 0, 0);
-    disconnect(ui->imagePlot, SIGNAL(mousePress(QMouseEvent*)), 0, 0);
+    disconnect(ui->fftPlot, SIGNAL(mousePress(QMouseEvent*)), nullptr, nullptr);
+    disconnect(ui->imagePlot, SIGNAL(mousePress(QMouseEvent*)), nullptr, nullptr);
 }
 
 void MainWindow::ClearImages()
@@ -902,7 +901,7 @@ void MainWindow::on_angleSpin_editingFinished()
 
     // here we load the svg from the resource file
     QSvgRenderer renderer(QString(":/Images/axes.svg"));
-    QPainter* p = new QPainter(&newmap);
+    auto p = new QPainter(&newmap);
     //draw the texts (we have rotated the POSITION before)
     p->setFont(tFont);
     p->setPen(xPen);

@@ -47,8 +47,6 @@ public:
 
     Eigen::MatrixXd getBraggImage();
 
-    Eigen::MatrixXd getHgImage();
-
     Eigen::MatrixXd getRawPhase();
 
     Eigen::MatrixXd getPhase();

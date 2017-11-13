@@ -9,8 +9,10 @@ GPA::GPA(Eigen::MatrixXcd img)
     _FFT = std::make_shared<Eigen::MatrixXcd>(Eigen::MatrixXcd(_Image->rows(), _Image->cols()));
 
     // create fftw plans
-    _FFTplan = std::make_shared<fftw_plan>(fftw_plan_dft_2d(_Image->rows(), _Image->cols(), NULL, NULL, FFTW_FORWARD, FFTW_ESTIMATE));
-    _IFFTplan = std::make_shared<fftw_plan>(fftw_plan_dft_2d(_Image->rows(), _Image->cols(), NULL, NULL, FFTW_BACKWARD, FFTW_ESTIMATE));
+    _FFTplan = std::make_shared<fftw_plan>(fftw_plan_dft_2d(static_cast<int>(_Image->rows()),
+                                                            static_cast<int>(_Image->cols()), NULL, NULL, FFTW_FORWARD, FFTW_ESTIMATE));
+    _IFFTplan = std::make_shared<fftw_plan>(fftw_plan_dft_2d(static_cast<int>(_Image->rows()),
+                                                             static_cast<int>(_Image->cols()), NULL, NULL, FFTW_BACKWARD, FFTW_ESTIMATE));
 
     // do the FFT now
     UtilsFFT::doFFTPlan(_FFTplan, UtilsFFT::preFFTShift(*_Image), *_FFT);
@@ -48,8 +50,8 @@ std::shared_ptr<Eigen::MatrixXd> GPA::getEyy()
 
 int GPA::getGVectors()
 {
-    int xs = _FFT->cols();
-    int ys = _FFT->rows();
+    int xs = static_cast<int>(_FFT->cols());
+    int ys = static_cast<int>(_FFT->rows());
 
     //Eigen::MatrixXd _PS(ys, xs);
 
@@ -75,7 +77,6 @@ int GPA::getGVectors()
 
     // loop through radii and sum
     // can't use openmp due to use of push_back ???
-//    #pragma omp parallel for
     for (int r = 1; r < std::min(xs, ys) / 4 - 1; ++r)
     {
         vals.clear();
@@ -89,7 +90,7 @@ int GPA::getGVectors()
                     vals.push_back(std::real(_PS(j, i)));
             }
 
-        std::sort(vals.begin(), vals.end(), std::greater<double>());
+        std::sort(vals.begin(), vals.end(), std::greater<>());
 
         double av = 0;
         int sz = std::min((int)vals.size(), 10);
@@ -101,24 +102,23 @@ int GPA::getGVectors()
         averages.push_back(av);
     }
 
-    if(averages.size() < 1)
+    if(averages.empty())
         return std::min(xs, ys) / 2;
 
     // normalise
     auto minIterator = std::min_element(averages.begin(), averages.end());
     double min = *minIterator;
-    for (int i = 0; i < averages.size(); ++i)
-        averages[i] -= min;
+    for (double &average : averages)
+        average -= min;
     auto maxIterator = std::max_element(averages.begin(), averages.end());
     max = *maxIterator;
-    for (int i = 0; i < averages.size(); ++i)
-        averages[i] /= max;
+    for (double &average : averages)
+        average /= max;
 
     int inner = 0;
 
     // can't use openmp due to break statement
     // need to decide what's that fastest way of doing this
-//    #pragma omp parallel for
     for(int i = 0; i < averages.size(); ++i)
     {
         if (averages[i] < 0.9 * max)
@@ -136,7 +136,7 @@ int GPA::getGVectors()
     }
 
     // just finds the maximum value not in the centre.
-    int radius = std::distance(averages.begin(), std::max_element(averages.begin()+inner, averages.end()));
+    int radius = static_cast<int>(std::distance(averages.begin(), std::max_element(averages.begin() + inner, averages.end())));
 
     return radius;
 }
@@ -172,8 +172,9 @@ void GPA::calculateDistortion(double angle, std::string mode)
     Coord2D<double> g1 = _Phases[0]->getGVector();
     Coord2D<double> g2 = _Phases[1]->getGVector();
 
-    A << g1.x, g2.x, g1.y, g2.y;
-    A = A.transpose().inverse();
+    //NOTE: I've created the A matrix already transposed
+    A << g1.x, g1.y, g2.x, g2.y;
+    A = A.inverse().eval();
     // rotate the basis
     A = UtilsMaths::MakeRotationMatrix(angle) * A;
 

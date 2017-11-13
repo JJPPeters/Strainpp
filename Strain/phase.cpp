@@ -1,23 +1,24 @@
 #include "phase.h"
-#include "fftw3.h"
 
 #include "iostream"
 
 Phase::Phase(std::shared_ptr<Eigen::MatrixXcd> inputFFT, double gx, double gy, double sigma, std::shared_ptr<fftw_plan> forwardPlan, std::shared_ptr<fftw_plan> inversePlan)
 {
     _angle = 0;
-    _FFT = inputFFT;
+    _FFT = std::move(inputFFT);
     _gxPx = gx;
     _gyPx = gy;
     _gx = _gxPx / _FFT->cols();
     _gy = _gyPx / _FFT->rows();
     _sigma = sigma;
 
-    _IFFTplan = inversePlan;
-    _FFTplan = forwardPlan;
+    _IFFTplan = std::move(inversePlan);
+    _FFTplan = std::move(forwardPlan);
 
-    _FFTdiffplan = std::make_shared<fftw_plan>(fftw_plan_dft_2d(_FFT->rows() + 2, _FFT->cols() + 2, NULL, NULL, FFTW_FORWARD, FFTW_ESTIMATE));
-    _IFFTdiffplan = std::make_shared<fftw_plan>(fftw_plan_dft_2d(_FFT->rows() + 2, _FFT->cols() + 2, NULL, NULL, FFTW_BACKWARD, FFTW_ESTIMATE));
+    _FFTdiffplan = std::make_shared<fftw_plan>(fftw_plan_dft_2d(static_cast<int>(_FFT->rows() + 2),
+                                                                static_cast<int>(_FFT->cols() + 2), NULL, NULL, FFTW_FORWARD, FFTW_ESTIMATE));
+    _IFFTdiffplan = std::make_shared<fftw_plan>(fftw_plan_dft_2d(static_cast<int>(_FFT->rows() + 2),
+                                                                 static_cast<int>(_FFT->cols() + 2), NULL, NULL, FFTW_BACKWARD, FFTW_ESTIMATE));
 
 }
 
@@ -192,12 +193,12 @@ void Phase::getDifferential(Eigen::MatrixXcd &dx, Eigen::MatrixXcd &dy)
 
 Coord2D<double> Phase::getGVector()
 {
-    return Coord2D<double>(_gx, _gy);
+    return {_gx, _gy};
 }
 
 Coord2D<double> Phase::getGVectorPixels()
 {
-    return Coord2D<double>(_gxPx, _gyPx);
+    return {_gxPx, _gyPx};
 }
 
 void Phase::refinePhase(int t, int l, int b, int r)

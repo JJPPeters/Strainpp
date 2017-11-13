@@ -39,7 +39,7 @@ private:
 
 public:
 
-    GPA(Eigen::MatrixXcd img);
+    explicit GPA(Eigen::MatrixXcd img);
 
     void updateImage(Eigen::MatrixXcd img)
     {
@@ -68,13 +68,11 @@ public:
 
     std::shared_ptr<Phase> getPhase(int i);
 
-    void rotateReference();
-
     void calculateDistortion(double angle, std::string mode);
 
     Coord2D<int> getSize()
     {
-        return Coord2D<int>(_Image->cols(), _Image->rows());
+        return Coord2D<int>(static_cast<int>(_Image->cols()), static_cast<int>(_Image->rows()));
     }
 
 };

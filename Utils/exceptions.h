@@ -5,10 +5,10 @@
 
 class SizeException : public std::exception
 {
-    virtual const char* what() const throw()
-      {
+    const char* what() const throw() override
+    {
         return "Image dimensions do not match array dimensions";
-      }
+    }
 };
 
 extern SizeException sizeError;
