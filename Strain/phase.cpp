@@ -29,6 +29,7 @@ Eigen::MatrixXd Phase::getGaussianMask()
 
     Eigen::MatrixXd mask(_FFT->rows(), _FFT->cols());
 
+    #pragma omp parallel for
     for (int j = 0; j < _FFT->rows(); ++j)
     {
         double yc = (double)j - yf;
@@ -88,6 +89,7 @@ Eigen::MatrixXd Phase::getPhase()
     Eigen::MatrixXd phase = getRawPhase();
 
     // can this be made faster in eigen?
+    #pragma omp parallel for
     for(int j = 0; j < phase.rows(); ++j)
         for(int i =0; i < phase.cols(); ++i)
             phase(j, i) = phase(j, i) - 2*PI * (i*_gx + j*_gy);
@@ -99,6 +101,7 @@ Eigen::MatrixXd Phase::getWrappedPhase()
 {
     Eigen::MatrixXd phase = getPhase();
 
+    #pragma omp parallel for
     for(int i = 0; i < phase.size(); ++i)
         phase(i) -= std::round(phase(i) / (2*PI)) * 2*PI;
 
@@ -128,6 +131,7 @@ void Phase::getDifferential(Eigen::MatrixXcd &dx, Eigen::MatrixXcd &dy)
     Eigen::MatrixXcd yTemp(_FFT->rows()+2, _FFT->cols()+2);
 
     // fill kernels with pre fft shifted data
+    #pragma omp parallel for
     for (int i = 0; i < 3; ++i)
     {
         // should all be divided by 6 (this is now done later)
@@ -142,6 +146,7 @@ void Phase::getDifferential(Eigen::MatrixXcd &dx, Eigen::MatrixXcd &dy)
 
     // create padded exponential phase matrix
     std::complex<double> im(0, 1);
+    #pragma omp parallel for
     for (int i = 0; i < _NormPhase.rows(); ++i)
         for (int j = 0; j < _NormPhase.cols(); ++j)
             expPhase(i, j) = std::exp(im * _NormPhase(i, j));
@@ -151,6 +156,7 @@ void Phase::getDifferential(Eigen::MatrixXcd &dx, Eigen::MatrixXcd &dy)
     UtilsFFT::doFFTPlan(_FFTdiffplan, dy_kernel, yTemp);
 
     // do convolution
+    #pragma omp parallel for
     for (int i = 0; i < phaseTemp.size(); ++i)
     {
         xTemp(i) = xTemp(i) * phaseTemp(i);
@@ -163,6 +169,7 @@ void Phase::getDifferential(Eigen::MatrixXcd &dx, Eigen::MatrixXcd &dy)
     // for normalising IFFT
     double nn = (_FFT->rows()+2)*(_FFT->cols()+2);
 
+    #pragma omp parallel for
     for (int i = 1; i < expPhase.rows()-1; ++i)
         for (int j = 1; j < expPhase.cols()-1; ++j)
         {
@@ -199,12 +206,14 @@ void Phase::refinePhase(int t, int l, int b, int r)
     // We then readjust the G-vectors to flatten this gradient.
     Eigen::MatrixXd area(t-b, r-l);
 
+    #pragma omp parallel for
     for (int j = 0; j < t-b; ++j)
         for (int i = 0; i < r-l; ++i)
             area(j, i) = _NormPhase(j+b, i+l);
 
     Eigen::MatrixXd X(area.size(), 3);
 
+    #pragma omp parallel for
     for (int i = 0; i < area.cols(); ++i)
         for (int j = 0; j < area.rows(); ++j)
         {

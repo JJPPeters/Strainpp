@@ -59,6 +59,7 @@ int GPA::getGVectors()
             //= UtilsMaths::HannWindow(original_image);;
 
     // get power spectrum as this will be used quite a bit
+    #pragma omp parallel for
     for (int xIndex = 0; xIndex < xs; ++xIndex)
       for (int yIndex = 0; yIndex < ys; ++yIndex)
           _PS(yIndex, xIndex) =  std::log10(1+std::abs( _PS(yIndex, xIndex) ));
@@ -73,6 +74,8 @@ int GPA::getGVectors()
     std::vector<double> vals;
 
     // loop through radii and sum
+    // can't use openmp due to use of push_back ???
+//    #pragma omp parallel for
     for (int r = 1; r < std::min(xs, ys) / 4 - 1; ++r)
     {
         vals.clear();
@@ -113,6 +116,9 @@ int GPA::getGVectors()
 
     int inner = 0;
 
+    // can't use openmp due to break statement
+    // need to decide what's that fastest way of doing this
+//    #pragma omp parallel for
     for(int i = 0; i < averages.size(); ++i)
     {
         if (averages[i] < 0.9 * max)
@@ -123,6 +129,7 @@ int GPA::getGVectors()
         averages[i] *= 0;
     }
 
+    #pragma omp parallel for
     for(int i = 0; i < averages.size(); ++i)
     {
         averages[i] *= (averages.size() - i);

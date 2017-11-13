@@ -45,6 +45,7 @@ public:
         std::vector<double> output(data()->valueSize()*data()->keySize());
 
         // the odd indexing is because we need to export the image 'upside down'
+        #pragma omp parallel for
         for (int i = 0; i < data()->valueSize(); ++i)
             for (int j = 0; j < data()->keySize(); ++j)
                 output[ i*data()->keySize() + j ] = data()->cell(j, data()->valueSize()-1-i);
@@ -56,6 +57,7 @@ public:
 class ImagePlot : public QCustomPlot
 {
     Q_OBJECT
+
 public:
     ImagePlot(QWidget *parent = 0) : QCustomPlot(parent)
     {
@@ -155,6 +157,7 @@ public:
         //check imageobject is not null?
         ImageObject->data()->setSize(sx, sy);
         ImageObject->data()->setRange(QCPRange(-(double)sx/2, (double)sx/2), QCPRange(-(double)sy/2, (double)sy/2));
+        #pragma omp parallel for
         for (int xIndex=0; xIndex<sx; ++xIndex)
           for (int yIndex=0; yIndex<sy; ++yIndex)
             ImageObject->data()->setCell(xIndex, yIndex, image[yIndex*sx+xIndex]);
@@ -195,30 +198,35 @@ public:
         ImageObject->data()->setRange(QCPRange(-(double)sx/2, (double)sx/2), QCPRange(-(double)sy/2, (double)sy/2));
         if (show == ShowComplex::Real)
         {
+            #pragma omp parallel for
             for (int xIndex=0; xIndex<sx; ++xIndex)
               for (int yIndex=0; yIndex<sy; ++yIndex)
                   ImageObject->data()->setCell(xIndex, yIndex, std::real(image[yIndex*sx+xIndex]));
         }
         else if (show == ShowComplex::Complex)
         {
+            #pragma omp parallel for
             for (int xIndex=0; xIndex<sx; ++xIndex)
               for (int yIndex=0; yIndex<sy; ++yIndex)
                   ImageObject->data()->setCell(xIndex, yIndex, std::imag(image[yIndex*sx+xIndex]));
         }
         else if (show == ShowComplex::Phase)
         {
+            #pragma omp parallel for
             for (int xIndex=0; xIndex<sx; ++xIndex)
               for (int yIndex=0; yIndex<sy; ++yIndex)
                   ImageObject->data()->setCell(xIndex, yIndex, std::arg(image[yIndex*sx+xIndex]));
         }
         else if (show == ShowComplex::Amplitude)
         {
+            #pragma omp parallel for
             for (int xIndex=0; xIndex<sx; ++xIndex)
               for (int yIndex=0; yIndex<sy; ++yIndex)
                   ImageObject->data()->setCell(xIndex, yIndex, std::abs(image[yIndex*sx+xIndex]));
         }
         else if (show == ShowComplex::PowerSpectrum)
         {
+            #pragma omp parallel for
             for (int xIndex=0; xIndex<sx; ++xIndex)
               for (int yIndex=0; yIndex<sy; ++yIndex)
                   ImageObject->data()->setCell(xIndex, yIndex, std::log10(1+std::abs(image[yIndex*sx+xIndex])));

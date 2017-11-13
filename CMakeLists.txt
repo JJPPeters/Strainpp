@@ -1,22 +1,44 @@
 project( strainpp )
 cmake_minimum_required( VERSION 3.5 )
-set ( CMAKE_BUILD_TYPE RELEASE )
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 # set(CMAKE_AUTOMOC ON) # this seemed to not work, did it manually anyway...
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
 
-add_definitions ( -Wall )
+find_package (Qt5Widgets REQUIRED)
+find_package (Qt5PrintSupport REQUIRED)
+find_package (Qt5Svg REQUIRED)
 
-find_package ( Qt5Widgets REQUIRED )
-find_package ( Qt5PrintSupport REQUIRED )
-find_package ( Qt5Svg REQUIRED )
+FIND_PACKAGE( OpenMP REQUIRED )
+if(OpenMP_FOUND)
+    message(STATUS "Found OpenMP")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+endif(OpenMP_FOUND)
 
-find_package ( FFTW REQUIRED )
-find_package ( Eigen3 REQUIRED )
-find_package ( TIFF REQUIRED )
-find_package ( QCustomPlot REQUIRED )
+set(FFTW_ROOT $ENV{FFTW_DIR})
+find_package (FFTW REQUIRED)
+if(FFTW_FOUND)
+    message(STATUS "FFTW3 found (include: ${FFTW_INCLUDES})")
+endif(FFTW_FOUND)
+
+find_package (Eigen3 REQUIRED)
+if(FFTW_FOUND)
+	message(STATUS "EIGEN3 found (include: ${EIGEN3_INCLUDE_DIR})")
+endif(FFTW_FOUND)
+
+find_package (TIFF REQUIRED)
+if(TIFF_FOUND)
+	message(STATUS "TIFF found (include: ${TIFF_INCLUDE_DIR})")
+endif(TIFF_FOUND)
+
+find_package (QCustomPlot REQUIRED)
+if(QCUSTOMPLOT_FOUND)
+	message(STATUS "QCUSTOMPLOT found (include: ${QCustomPlot_INCLUDE_DIR})")
+    message(STATUS "QCUSTOMPLOT found (include: ${QCustomPlot_LIBRARIES})")
+endif(QCUSTOMPLOT_FOUND)
 
 set (CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS}
 	${Qt5Widgets_EXECUTABLE_COMPILE_FLAGS}
@@ -27,6 +49,7 @@ add_definitions (
 	${Qt5Widgets_DEFINITIONS}
 	${Qt5PrintSupport_DEFINITIONS}
 	${Qt5Svg_DEFINITIONS}
+    ${QCustomPlot_DEFINITIONS}
 	)
 
 include_directories (
@@ -69,4 +92,4 @@ set ( Strainpp_MOCS
 QT5_WRAP_CPP(MOCS ${Strainpp_MOCS})
 
 add_executable ( strainpp ${Strainpp_SRCS} ${UIS} ${RSCS} ${MOCS} strainpp.rc)
-target_link_libraries ( strainpp  Qt5::Widgets Qt5::PrintSupport Qt5::Svg ${QCustomPlot_LIBRARY} ${FFTW_LIBRARIES} ${TIFF_LIBRARY})
+target_link_libraries ( strainpp  Qt5::Widgets Qt5::PrintSupport Qt5::Svg ${FFTW_LIBRARIES} ${TIFF_LIBRARY} ${QCustomPlot_LIBRARY})

@@ -10,10 +10,10 @@ pkg_check_modules(PC_QCustomPlot QUIET qcustomplot)
 set(QCustomPlot_DEFINITIONS ${PC_QCustomPlot_CFLAGS_OTHER})
 
 find_path(QCustomPlot_INCLUDE_DIR qcustomplot.h
-		  HINTS ${PC_QCustomPlot_INCLUDEDIR} ${PC_QCustomPlot_INCLUDE_DIRS})
+		  HINTS ${QCUSTOMPLOT_ROOT} $ENV{QCUSTOMPLOT_DIR} ${PC_QCustomPlot_INCLUDEDIR} ${PC_QCustomPlot_INCLUDE_DIRS})
 
 find_library(QCustomPlot_LIBRARY NAMES qcustomplot
-			 HINTS ${PC_QCustomPlot_LIBDIR} ${PC_QCustomPlot_LIBRARY_DIRS} )
+			 HINTS ${QCUSTOMPLOT_ROOT} $ENV{QCUSTOMPLOT_DIR} ${PC_QCustomPlot_LIBDIR} ${PC_QCustomPlot_LIBRARY_DIRS} )
 
 set(QCustomPlot_LIBRARIES ${QCustomPlot_LIBRARY} )
 set(QCustomPlot_INCLUDE_DIRS ${QCustomPlot_INCLUDE_DIR} )

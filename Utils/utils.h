@@ -33,6 +33,7 @@ namespace UtilsFFT {
     {
         Eigen::MatrixXT<T> output(input.rows(), input.cols());
 
+        #pragma omp parallel for
         for(int j = 0; j < input.rows(); ++j)
             for(int i =0; i < input.cols(); ++i)
                 output(j, i) = std::pow(-1, i+j)*input(j, i);
@@ -90,12 +91,15 @@ namespace UtilsMaths {
         std::vector<double> hann_y(input.rows());
         std::vector<double> hann_x(input.cols());
 
+        #pragma omp parallel for
         for(int i = 0; i < input.rows(); ++i)
             hann_y[i] = 0.5 * (1 - std::cos( (2*PI*i) / (input.rows()-1) ));
 
+        #pragma omp parallel for
         for(int i = 0; i < input.cols(); ++i)
             hann_x[i] = 0.5 * (1 - std::cos( (2*PI*i) / (input.cols()-1) ));
 
+        #pragma omp parallel for
         for(int i = 0; i < input.rows(); ++i)
             for(int j = 0; j < input.cols(); ++j)
                 output(i, j) = input(i, j) * hann_y[i] * hann_x[j];

@@ -57,12 +57,16 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->colorBar, SIGNAL(mapChanged(QCPColorGradient)), ui->exyPlot, SLOT(SetColorMap(QCPColorGradient)));
     connect(ui->colorBar, SIGNAL(mapChanged(QCPColorGradient)), ui->eyxPlot, SLOT(SetColorMap(QCPColorGradient)));
     connect(ui->colorBar, SIGNAL(mapChanged(QCPColorGradient)), ui->eyyPlot, SLOT(SetColorMap(QCPColorGradient)));
+
+    fftw_init_threads();
+    fftw_plan_with_nthreads(omp_get_max_threads());
 }
 
 
 MainWindow::~MainWindow()
 {
     DisconnectAll();
+    fftw_cleanup_threads();
     delete ui;
 }
 
@@ -137,6 +141,7 @@ void MainWindow::openDM(std::string filename)
     // image is complex for FFTing later
     Eigen::MatrixXcd complexImage(ny, nx);
 
+    #pragma omp parallel for
     for (int i = 0; i < complexImage.size(); ++i)
         complexImage(i) = image[i];
 
@@ -302,7 +307,7 @@ void MainWindow::AcceptGVector()
             if (!minimalDialogs)
                 QMessageBox::information(this, tr("GPA"), tr("Select the smallest g-vector on the FFT"), QMessageBox::Ok);
 
-            connect(ui->fftPlot, &ImagePlot::mousePress, this, &MainWindow::clickGVector);
+            connect(ui->fftPlot, SIGNAL(mousePress(QMouseEvent*)), this, SLOT(clickGVector(QMouseEvent*)));
         }
         else if (msgBox.clickedButton() == btnManual)
         {
@@ -317,7 +322,7 @@ void MainWindow::AcceptGVector()
             if (!minimalDialogs)
                 QMessageBox::information(this, tr("GPA"), tr("Select a g-vector on the FFT"), QMessageBox::Ok);
 
-            connect(ui->fftPlot, &ImagePlot::mousePress, this, &MainWindow::clickBraggSpot);
+            connect(ui->fftPlot, SIGNAL(mousePress(QMouseEvent*)), this, SLOT(clickBraggSpot(QMouseEvent*)));
         }
     }
 }
@@ -331,7 +336,7 @@ void MainWindow::clickGVector(QMouseEvent *event)
     if(!ui->fftPlot->inAxis(x, y))
         return;
 
-    disconnect(ui->fftPlot, &ImagePlot::mousePress, this, &MainWindow::clickGVector);
+    disconnect(ui->fftPlot, SIGNAL(mousePress(QMouseEvent*)), 0, 0);
     updateStatusBar("--");
 
     minGrad = std::sqrt(x*x+y*y);
@@ -352,7 +357,7 @@ void MainWindow::clickBraggSpot(QMouseEvent *event)
     if(!ui->fftPlot->inAxis(x, y))
         return;
 
-    disconnect(ui->fftPlot, &ImagePlot::mousePress, this, &MainWindow::clickBraggSpot);
+    disconnect(ui->fftPlot, SIGNAL(mousePress(QMouseEvent*)), 0, 0);
     updateStatusBar("--");
 
     // calculate optimal sigma [REF]
@@ -386,13 +391,9 @@ void MainWindow::clickBraggSpot(QMouseEvent *event)
     auto ret = QMessageBox::information(this, tr("Refine"), tr("Do you want to  refine this g-vector"), QMessageBox::Yes | QMessageBox::No);
 
     if (ret == QMessageBox::Yes)
-    {
         selectRefineArea();
-    }
     else
-    {
         continuePhase();
-    }
 }
 
 
@@ -417,7 +418,7 @@ void MainWindow::continuePhase()
         updateStatusBar("Select another g-vector on the FFT");
         if (!minimalDialogs)
             QMessageBox::information(this, tr("GPA"), tr("Select another g-vector on the FFT"), QMessageBox::Ok);
-        connect(ui->fftPlot, &ImagePlot::mousePress, this, &MainWindow::clickBraggSpot);
+        connect(ui->fftPlot, SIGNAL(mousePress(QMouseEvent*)), this, SLOT(clickBraggSpot(QMouseEvent*)));
     }
     else
     {
@@ -454,7 +455,7 @@ void MainWindow::selectRefineArea()
             ui->imagePlot->replot();
             xCorner.clear();
             yCorner.clear();
-            connect(ui->imagePlot, &ImagePlot::mousePress, this, &MainWindow::clickRectCorner);
+            connect(ui->imagePlot, SIGNAL(mousePress(QMouseEvent*)), this, SLOT(clickRectCorner(QMouseEvent*)));
         }
 
     }
@@ -464,7 +465,7 @@ void MainWindow::selectRefineArea()
             QMessageBox::information(this, tr("GPA"), tr("Select corners of refinement area on phase"), QMessageBox::Ok);
         xCorner.clear();
         yCorner.clear();
-        connect(ui->imagePlot, &ImagePlot::mousePress, this, &MainWindow::clickRectCorner);
+        connect(ui->imagePlot, SIGNAL(mousePress(QMouseEvent*)), this, SLOT(clickRectCorner(QMouseEvent*)));
     }
 }
 
@@ -487,7 +488,7 @@ void MainWindow::clickRectCorner(QMouseEvent *event)
 
     if(xCorner.size() == 2)
     {
-        disconnect(ui->imagePlot, &ImagePlot::mousePress, this, &MainWindow::clickRectCorner);
+        connect(ui->imagePlot, SIGNAL(mousePress(QMouseEvent*)), 0, 0);
 
         double top = std::max(yCorner[0], yCorner[1]);
         double bottom = std::min(yCorner[0], yCorner[1]);
@@ -573,7 +574,7 @@ void MainWindow::doRefinement(double top, double left, double bottom, double rig
     {
         xCorner.clear();
         yCorner.clear();
-        connect(ui->imagePlot, &ImagePlot::mousePress, this, &MainWindow::clickRectCorner);
+        connect(ui->imagePlot, SIGNAL(mousePress(QMouseEvent*)), this, SLOT(clickRectCorner(QMouseEvent*)));
     }
 }
 
@@ -833,9 +834,12 @@ void MainWindow::ExportStrains(int choice)
 void MainWindow::DisconnectAll()
 {
     // stop current GPA if in progress
-    disconnect(ui->fftPlot, &ImagePlot::mousePress, this, &MainWindow::clickBraggSpot);
-    disconnect(ui->fftPlot, &ImagePlot::mousePress, this, &MainWindow::clickGVector);
-    disconnect(ui->imagePlot, &ImagePlot::mousePress, this, &MainWindow::clickRectCorner);
+//    disconnect(ui->fftPlot, &ImagePlot::mousePress, this, &MainWindow::clickBraggSpot);
+//    disconnect(ui->fftPlot, &ImagePlot::mousePress, this, &MainWindow::clickGVector);
+//    disconnect(ui->imagePlot, &ImagePlot::mousePress, this, &MainWindow::clickRectCorner);
+
+    disconnect(ui->fftPlot, SIGNAL(mousePress(QMouseEvent*)), 0, 0);
+    disconnect(ui->imagePlot, SIGNAL(mousePress(QMouseEvent*)), 0, 0);
 }
 
 void MainWindow::ClearImages()
