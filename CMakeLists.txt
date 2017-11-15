@@ -10,6 +10,13 @@ find_package (Qt5Widgets REQUIRED)
 find_package (Qt5PrintSupport REQUIRED)
 find_package (Qt5Svg REQUIRED)
 
+if(WIN32)
+	if(CMAKE_COMPILER_IS_GNUCXX)
+        # I think this is needed to make it a full GUI app, otherwise it will show the console
+		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mwindows")
+	endif(CMAKE_COMPILER_IS_GNUCXX)
+endif(WIN32)
+
 FIND_PACKAGE( OpenMP REQUIRED )
 if(OpenMP_FOUND)
     message(STATUS "Found OpenMP")

@@ -179,10 +179,22 @@ void GPA::calculateDistortion(double angle, std::string mode)
     A = UtilsMaths::MakeRotationMatrix(angle) * A;
 
     double factor = -1.0 / (2.0 * PI);
-    _Exx = std::make_shared<Eigen::MatrixXd>( (factor * (A(0, 0) * d1dx + A(0, 1) * d2dx)).real() );
-    _Exy = std::make_shared<Eigen::MatrixXd>( (factor * (A(0, 0) * d1dy + A(0, 1) * d2dy)).real() );
-    _Eyx = std::make_shared<Eigen::MatrixXd>( (factor * (A(1, 0) * d1dx + A(1, 1) * d2dx)).real() );
-    _Eyy = std::make_shared<Eigen::MatrixXd>( (factor * (A(1, 0) * d1dy + A(1, 1) * d2dy)).real() );
+
+    // not sure if I get anything out of this really, all the tasks use the same variables
+#pragma omp parallel
+    {
+    #pragma omp single
+        {
+        #pragma omp task
+            _Exx = std::make_shared<Eigen::MatrixXd>((factor * (A(0, 0) * d1dx + A(0, 1) * d2dx)).real());
+        #pragma omp task
+            _Exy = std::make_shared<Eigen::MatrixXd>((factor * (A(0, 0) * d1dy + A(0, 1) * d2dy)).real());
+        #pragma omp task
+            _Eyx = std::make_shared<Eigen::MatrixXd>((factor * (A(1, 0) * d1dx + A(1, 1) * d2dx)).real());
+        #pragma omp task
+            _Eyy = std::make_shared<Eigen::MatrixXd>((factor * (A(1, 0) * d1dy + A(1, 1) * d2dy)).real());
+        }
+    }
 
     if (mode == "Strain")
     {

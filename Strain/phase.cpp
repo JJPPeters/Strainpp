@@ -121,7 +121,7 @@ void Phase::getDifferential(Eigen::MatrixXcd &dx, Eigen::MatrixXcd &dy)
 {
     dx = Eigen::MatrixXcd(_FFT->rows(), _FFT->cols());
     dy = Eigen::MatrixXcd(_FFT->rows(), _FFT->cols());
-    // contains the convolutino kernel, then the resultant differential
+    // contains the convolution kernel, then the resultant differential
     Eigen::MatrixXcd dx_kernel(_FFT->rows()+2, _FFT->cols()+2);
     Eigen::MatrixXcd dy_kernel(_FFT->rows()+2, _FFT->cols()+2);
     // contains exponential form of strain
@@ -152,9 +152,18 @@ void Phase::getDifferential(Eigen::MatrixXcd &dx, Eigen::MatrixXcd &dy)
         for (int j = 0; j < _NormPhase.cols(); ++j)
             expPhase(i, j) = std::exp(im * _NormPhase(i, j));
 
-    UtilsFFT::doFFTPlan(_FFTdiffplan, expPhase, phaseTemp);
-    UtilsFFT::doFFTPlan(_FFTdiffplan, dx_kernel, xTemp);
-    UtilsFFT::doFFTPlan(_FFTdiffplan, dy_kernel, yTemp);
+    #pragma omp parallel
+    {
+    #pragma omp single
+        {
+        #pragma omp task
+            UtilsFFT::doFFTPlan(_FFTdiffplan, expPhase, phaseTemp);
+        #pragma omp task
+            UtilsFFT::doFFTPlan(_FFTdiffplan, dx_kernel, xTemp);
+        #pragma omp task
+            UtilsFFT::doFFTPlan(_FFTdiffplan, dy_kernel, yTemp);
+        }
+    }
 
     // do convolution
     #pragma omp parallel for
@@ -164,8 +173,16 @@ void Phase::getDifferential(Eigen::MatrixXcd &dx, Eigen::MatrixXcd &dy)
         yTemp(i) = yTemp(i) * phaseTemp(i);
     }
 
-    UtilsFFT::doFFTPlan(_IFFTdiffplan, xTemp, dx_kernel);
-    UtilsFFT::doFFTPlan(_IFFTdiffplan, yTemp, dy_kernel);
+    #pragma omp parallel
+    {
+    #pragma omp single
+        {
+        #pragma omp task
+            UtilsFFT::doFFTPlan(_IFFTdiffplan, xTemp, dx_kernel);
+        #pragma omp task
+            UtilsFFT::doFFTPlan(_IFFTdiffplan, yTemp, dy_kernel);
+        }
+    }
 
     // for normalising IFFT
     double nn = (_FFT->rows()+2)*(_FFT->cols()+2);
@@ -176,7 +193,7 @@ void Phase::getDifferential(Eigen::MatrixXcd &dx, Eigen::MatrixXcd &dy)
         {
             std::complex<double> ph = std::conj(expPhase(i, j));
             // TODO: test this is correct
-            // Completely untexted but the 6 here is for the added value from the kernel (in pyhton version was divided at kernel creation)
+            // Completely untested but the 6 here is for the added value from the kernel (in python version was divided at kernel creation)
             // from basic comparison to my python code it seems to give roughly the same values (there is some rotation though)
             dx(i-1, j-1) = std::imag(ph * dx_kernel(i, j) / (nn*6));
             dy(i-1, j-1) = std::imag(ph * dy_kernel(i, j) / (nn*6));
