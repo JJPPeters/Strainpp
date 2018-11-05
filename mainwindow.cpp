@@ -862,11 +862,6 @@ void MainWindow::on_angleSpin_editingFinished()
     // simple, get the angle!
     double angle = ui->angleSpin->value();
 
-    if (lastAngle == angle)
-        return;
-
-    lastAngle = angle;
-
     // These are to account for the size of the text
     // there might be a better way using rects and setting the alignment to centre
     // but I can't be botthered to work it out
@@ -920,8 +915,10 @@ void MainWindow::on_angleSpin_editingFinished()
     ui->lblAxes->setPixmap(newmap);
 
     // now do the calculation if we need to
-    if(!haveStrains)
+    if(!haveStrains || lastAngle == angle)
         return;
+
+    lastAngle = angle;
 
     getStrains();
 }
