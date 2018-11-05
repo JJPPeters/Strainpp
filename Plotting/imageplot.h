@@ -149,7 +149,7 @@ public:
         setImageRatio();
 
         ImageObject = new QCPDataColorMap(xAxis, yAxis);
-        addPlottable(ImageObject);
+//        addPlottable(ImageObject);
         ImageObject->setGradient(QCPColorGradient::gpGrayscale); // default
         ImageObject->setInterpolate(false);
 
@@ -188,7 +188,7 @@ public:
         setImageRatio();
 
         ImageObject = new QCPDataColorMap(xAxis, yAxis);
-        addPlottable(ImageObject);
+//        addPlottable(ImageObject);
         ImageObject->setGradient(QCPColorGradient::gpGrayscale); // default
         ImageObject->setInterpolate(false);
 
@@ -252,7 +252,7 @@ public:
         circle->setBrush(fill);
         circle->topLeft->setCoords(x-radius, y-radius);
         circle->bottomRight->setCoords(x+radius, y+radius);
-        addItem(circle);
+//        addItem(circle);
         replot();
     }
 
@@ -263,7 +263,7 @@ public:
         rect->setBrush(fill);
         rect->topLeft->setCoords(l, t);
         rect->bottomRight->setCoords(r, b);
-        addItem(rect);
+//        addItem(rect);
         replot();
     }
 
@@ -305,10 +305,10 @@ private:
 
     void resizeEvent(QResizeEvent* event)
     {
-        mPaintBuffer = QPixmap(event->size());
+        Q_UNUSED(event)
         setViewport(rect());
         setImageRatio(event->size().width(), event->size().height());
-        replot(rpQueued);
+        replot(rpQueuedRefresh);
     }
 
     void setImageRatio()

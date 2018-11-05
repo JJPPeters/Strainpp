@@ -3,3 +3,5 @@ debug*
 release*
 *.user
 tests
+cmake-build-*
+.idea

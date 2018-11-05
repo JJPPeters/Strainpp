@@ -12,8 +12,13 @@ set(QCustomPlot_DEFINITIONS ${PC_QCustomPlot_CFLAGS_OTHER})
 find_path(QCustomPlot_INCLUDE_DIR qcustomplot.h
 		  HINTS ${QCUSTOMPLOT_ROOT} $ENV{QCUSTOMPLOT_DIR} ${PC_QCustomPlot_INCLUDEDIR} ${PC_QCustomPlot_INCLUDE_DIRS})
 
-find_library(QCustomPlot_LIBRARY NAMES qcustomplot
+find_library(QCustomPlot_LIBRARY_RELEASE NAMES qcustomplot qcustomplot2
 			 HINTS ${QCUSTOMPLOT_ROOT} $ENV{QCUSTOMPLOT_DIR} ${PC_QCustomPlot_LIBDIR} ${PC_QCustomPlot_LIBRARY_DIRS} )
+
+find_library(QCustomPlot_LIBRARY_DEBUG NAMES qcustomplotd qcustomplotd2
+		HINTS ${QCUSTOMPLOT_ROOT} $ENV{QCUSTOMPLOT_DIR} ${PC_QCustomPlot_LIBDIR} ${PC_QCustomPlot_LIBRARY_DIRS} )
+
+set(QCustomPlot_LIBRARY debug ${QCustomPlot_LIBRARY_DEBUG} optimized ${QCustomPlot_LIBRARY_RELEASE})
 
 set(QCustomPlot_LIBRARIES ${QCustomPlot_LIBRARY} )
 set(QCustomPlot_INCLUDE_DIRS ${QCustomPlot_INCLUDE_DIR} )

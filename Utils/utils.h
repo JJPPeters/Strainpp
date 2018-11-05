@@ -10,6 +10,7 @@
 #endif
 
 #include <memory>
+#include <vector>
 #include <cmath>
 #include "fftw3.h"
 
