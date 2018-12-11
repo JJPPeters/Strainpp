@@ -231,8 +231,7 @@ void MainWindow::showImageAndFFT(Eigen::MatrixXcd &image)
     }
     catch (const std::exception& e)
     {
-        QMessageBox messageBox;
-        messageBox.critical(nullptr,"Error", e.what());
+        QMessageBox::critical(nullptr,"Error", e.what());
         return;
     }
 
@@ -243,8 +242,7 @@ void MainWindow::showImageAndFFT(Eigen::MatrixXcd &image)
     }
     catch (const std::exception& e)
     {
-        QMessageBox messageBox;
-        messageBox.critical(nullptr,"Error", e.what());
+        QMessageBox::critical(nullptr,"Error", e.what());
         return;
     }
 
@@ -381,8 +379,7 @@ void MainWindow::clickBraggSpot(QMouseEvent *event)
     }
     catch (const std::exception& e)
     {
-        QMessageBox messageBox;
-        messageBox.critical(nullptr,"Error", e.what());
+        QMessageBox::critical(nullptr,"Error", e.what());
         return;
     }
 
@@ -405,8 +402,7 @@ void MainWindow::continuePhase()
     }
     catch (const std::exception& e)
     {
-        QMessageBox messageBox;
-        messageBox.critical(nullptr,"Error", e.what());
+        QMessageBox::critical(nullptr,"Error", e.what());
         return;
     }
 
@@ -557,8 +553,7 @@ void MainWindow::doRefinement(double top, double left, double bottom, double rig
     }
     catch (const std::exception& e)
     {
-        QMessageBox messageBox;
-        messageBox.critical(nullptr, "Error", e.what());
+        QMessageBox::critical(nullptr, "Error", e.what());
         return;
     }
 
@@ -865,18 +860,18 @@ void MainWindow::on_angleSpin_editingFinished()
     // These are to account for the size of the text
     // there might be a better way using rects and setting the alignment to centre
     // but I can't be botthered to work it out
-    QPoint ysz(-3, 4.5);
-    QPoint xsz(-3, 3);
+    QPointF ysz(-3, 4.5);
+    QPointF xsz(-3, 3);
     // This is the size of our area to draw in
     QSize size(100, 100);
     // This is the pixmap that will eventually be shown, we start with it transparent
     QPixmap newmap(size);
     newmap.fill(Qt::transparent);
     // this is the midpoint of our image (so we can rotate around it)
-    QPoint mid(size.height()/2, size.width()/2);
+    QPointF mid(size.height()/2., size.width()/2.);
     // this is the position of our labels
-    QPoint xp(65, 65);
-    QPoint yp(35, 35);
+    QPointF xp(65, 65);
+    QPointF yp(35, 35);
 
     // here we rotate these positions about the mid point
     xp = xp - mid;
@@ -904,9 +899,9 @@ void MainWindow::on_angleSpin_editingFinished()
     p->setPen(yPen);
     p->drawText(yp + ysz, "y");
     // now rotate the svg about hte mid point and draw it
-    p->translate(size.height()/2,size.height()/2);
+    p->translate(size.height()/2.,size.height()/2.);
     p->rotate(-angle);
-    p->translate(-size.height()/2,-size.height()/2);
+    p->translate(-size.height()/2.,-size.height()/2.);
     renderer.render(p);
     // done, phew...
     p->end();

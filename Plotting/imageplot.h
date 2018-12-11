@@ -29,8 +29,6 @@ enum ShowComplex{
         Amplitude,
         PowerSpectrum};
 
-typedef std::map<std::string, std::map<std::string, std::string>>::iterator it_type;
-
 // this wrapper class just serves to return a data array. I could just store an array, but it is
 // stored anyway and it is only needed for saving images.
 class QCPDataColorMap : public QCPColorMap
