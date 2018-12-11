@@ -165,7 +165,7 @@ public:
         size_x = sx;
         size_y = sy;
 
-        ImageObject->rescaleDataRange();
+        ImageObject->rescaleDataRange(true);
         rescaleAxes();
         setImageRatio();
         if (doReplot)
@@ -235,7 +235,7 @@ public:
         size_x = sx;
         size_y = sy;
 
-        ImageObject->rescaleDataRange();
+        ImageObject->rescaleDataRange(true);
         rescaleAxes();
         setImageRatio();
 
