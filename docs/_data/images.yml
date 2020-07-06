@@ -1,0 +1,3 @@
+logo: "/assets/logo.svg" # path from base that contains the main logo/icon
+texture: "/assets/texture.png" # path from base that contains the header background (tiled) texture
+texture_width: 128
