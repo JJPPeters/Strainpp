@@ -164,7 +164,8 @@ void MainWindow::openTIFF(std::string filename)
         return;
     }
 
-    uint32 samples;
+    // this is defaulting to 1 according to: https://www.awaresystems.be/imaging/tiff/tifftags/samplesperpixel.html
+    uint32 samples = 1;
     TIFFGetField(tif, TIFFTAG_SAMPLESPERPIXEL, &samples);
 
     if (samples != 1)
@@ -173,10 +174,10 @@ void MainWindow::openTIFF(std::string filename)
         return;
     }
 
-    uint16 format;
+    uint16 format = SAMPLEFORMAT_UINT;
     TIFFGetField(tif, TIFFTAG_SAMPLEFORMAT, &format);
 
-    uint16 bitsper;
+    uint16 bitsper = 1;
     TIFFGetField(tif, TIFFTAG_BITSPERSAMPLE, &bitsper);
 
     if (format == SAMPLEFORMAT_UINT)

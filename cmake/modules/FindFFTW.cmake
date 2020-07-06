@@ -35,10 +35,12 @@ set( CMAKE_FIND_LIBRARY_SUFFIXES_SAV ${CMAKE_FIND_LIBRARY_SUFFIXES} )
 if( ${FFTW_USE_STATIC_LIBS} )
     set( CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_STATIC_LIBRARY_SUFFIX} )
 else()
-    set( CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_SHARED_LIBRARY_SUFFIX} )
+    set(CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_SHARED_LIBRARY_SUFFIX}${CMAKE_STATIC_LIBRARY_SUFFIX} )
 endif()
 
 if( FFTW_ROOT )
+
+    message(STATUS "test root")
 
     #find libs
     find_library(
@@ -78,20 +80,20 @@ else()
 
     find_library(
             FFTW_LIB
-            NAMES *fftw3*
+            NAMES fftw3
             PATHS ${PKG_FFTW_LIBRARY_DIRS} ${LIB_INSTALL_DIR}
     )
 
     find_library(
             FFTWF_LIB
-            NAMES *fftw3f*
+            NAMES fftw3f
             PATHS ${PKG_FFTW_LIBRARY_DIRS} ${LIB_INSTALL_DIR}
     )
 
 
     find_library(
             FFTWL_LIB
-            NAMES *fftw3l*
+            NAMES fftw3l
             PATHS ${PKG_FFTW_LIBRARY_DIRS} ${LIB_INSTALL_DIR}
     )
 
@@ -116,7 +118,6 @@ endif()
 set( CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_FIND_LIBRARY_SUFFIXES_SAV} )
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(FFTW DEFAULT_MSG
-        FFTW_INCLUDES FFTW_LIBRARIES)
+find_package_handle_standard_args(FFTW DEFAULT_MSG FFTW_INCLUDES FFTW_LIBRARIES)
 
 mark_as_advanced(FFTW_INCLUDES FFTW_LIBRARIES FFTW_LIB FFTWF_LIB FFTWL_LIB)
