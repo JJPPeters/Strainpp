@@ -3,8 +3,8 @@ remote_theme: JJPPeters/jekyll-graphene-theme
 # setup
 title: Strain++ # this is the main title in the header
 tagline: Measure strain in TEM images # this is the text that appears next to the title
-baseurl: /strainpp # the subpath of your site, e.g. /blog
-url: https://github.com/JJPPeters/Strainpp/ # the base hostname & protocol for your site, e.g. http://example.com
+baseurl: /Strainpp # the subpath of your site, e.g. /blog
+url: https://jjppeters.github.io/Strainpp/ # the base hostname & protocol for your site, e.g. http://example.com
 repository: JJPPeters/Strainpp
 
 # contact
