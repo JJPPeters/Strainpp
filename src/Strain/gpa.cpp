@@ -8,14 +8,8 @@ GPA::GPA(Eigen::MatrixXcd img)
     _Image = std::make_shared<Eigen::MatrixXcd>(img);
     _FFT = std::make_shared<Eigen::MatrixXcd>(Eigen::MatrixXcd(_Image->rows(), _Image->cols()));
 
-    // create fftw plans
-    _FFTplan = std::make_shared<fftw_plan>(fftw_plan_dft_2d(static_cast<int>(_Image->rows()),
-                                                            static_cast<int>(_Image->cols()), NULL, NULL, FFTW_FORWARD, FFTW_ESTIMATE));
-    _IFFTplan = std::make_shared<fftw_plan>(fftw_plan_dft_2d(static_cast<int>(_Image->rows()),
-                                                             static_cast<int>(_Image->cols()), NULL, NULL, FFTW_BACKWARD, FFTW_ESTIMATE));
-
     // do the FFT now
-    UtilsFFT::doFFTPlan(_FFTplan, UtilsFFT::preFFTShift(*_Image), *_FFT);
+    UtilsFFT::doForwardFFT(_FFTplan, UtilsFFT::preFFTShift(*_Image), *_FFT);
 }
 
 std::shared_ptr<Eigen::MatrixXcd> GPA::getImage()
@@ -57,7 +51,7 @@ int GPA::getGVectors()
 
     Eigen::MatrixXcd _PS(ys, xs);
     Eigen::MatrixXcd hanned = UtilsMaths::HannWindow(*_Image);
-    UtilsFFT::doFFTPlan(_FFTplan, UtilsFFT::preFFTShift(hanned), _PS);
+    UtilsFFT::doForwardFFT(_FFTplan, UtilsFFT::preFFTShift(hanned), _PS);
             //= UtilsMaths::HannWindow(original_image);;
 
     // get power spectrum as this will be used quite a bit

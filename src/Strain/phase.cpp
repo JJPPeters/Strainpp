@@ -61,7 +61,7 @@ Eigen::MatrixXd Phase::getBraggImage()
     Eigen::MatrixXcd IFFT(_FFT->rows(), _FFT->cols());
 
     // do IFFT of masked FFT then return abs or real part
-    UtilsFFT::doFFTPlan(_IFFTplan, getMaskedFFT(), IFFT);
+    UtilsFFT::doBackwardFFT(_IFFTplan, getMaskedFFT(), IFFT);
 
     IFFT = UtilsFFT::preFFTShift(IFFT);
 
@@ -74,7 +74,7 @@ Eigen::MatrixXd Phase::getRawPhase()
     Eigen::MatrixXd phase(_FFT->rows(), _FFT->cols());
     Eigen::MatrixXcd IFFT(_FFT->rows(), _FFT->cols());
 
-    UtilsFFT::doFFTPlan(_IFFTplan, getMaskedFFT(), IFFT);
+    UtilsFFT::doBackwardFFT(_IFFTplan, getMaskedFFT(), IFFT);
 
     IFFT = UtilsFFT::preFFTShift(IFFT);
 
@@ -157,11 +157,11 @@ void Phase::getDifferential(Eigen::MatrixXcd &dx, Eigen::MatrixXcd &dy)
     #pragma omp single
         {
         #pragma omp task
-            UtilsFFT::doFFTPlan(_FFTdiffplan, expPhase, phaseTemp);
+            UtilsFFT::doForwardFFT(_FFTdiffplan, expPhase, phaseTemp);
         #pragma omp task
-            UtilsFFT::doFFTPlan(_FFTdiffplan, dx_kernel, xTemp);
+            UtilsFFT::doForwardFFT(_FFTdiffplan, dx_kernel, xTemp);
         #pragma omp task
-            UtilsFFT::doFFTPlan(_FFTdiffplan, dy_kernel, yTemp);
+            UtilsFFT::doForwardFFT(_FFTdiffplan, dy_kernel, yTemp);
         }
     }
 
@@ -178,9 +178,9 @@ void Phase::getDifferential(Eigen::MatrixXcd &dx, Eigen::MatrixXcd &dy)
     #pragma omp single
         {
         #pragma omp task
-            UtilsFFT::doFFTPlan(_IFFTdiffplan, xTemp, dx_kernel);
+            UtilsFFT::doBackwardFFT(_IFFTdiffplan, xTemp, dx_kernel);
         #pragma omp task
-            UtilsFFT::doFFTPlan(_IFFTdiffplan, yTemp, dy_kernel);
+            UtilsFFT::doBackwardFFT(_IFFTdiffplan, yTemp, dy_kernel);
         }
     }
 

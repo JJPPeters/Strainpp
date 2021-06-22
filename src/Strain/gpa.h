@@ -47,7 +47,7 @@ public:
             return;
 
         _Image = std::make_shared<Eigen::MatrixXcd>(img);
-        UtilsFFT::doFFTPlan(_FFTplan, UtilsFFT::preFFTShift(*_Image), *_FFT);
+        UtilsFFT::doForwardFFT(_FFTplan, UtilsFFT::preFFTShift(*_Image), *_FFT);
     }
 
     std::shared_ptr<Eigen::MatrixXcd> getImage();

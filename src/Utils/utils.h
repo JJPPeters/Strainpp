@@ -41,20 +41,30 @@ namespace UtilsFFT {
 
         return output;
     }
-
-    static void doFFTPlan(const std::shared_ptr<fftw_plan> plan, Eigen::MatrixXcd in, Eigen::MatrixXcd& out)
+    
+    static void doFFTPlan(std::shared_ptr<fftw_plan> plan, Eigen::MatrixXcd in, Eigen::MatrixXcd& out, int dir)
     {
         std::vector<std::complex<double>> buffer_in(in.size());
         std::vector<std::complex<double>> buffer_out(in.size());
 
         Eigen::Map<Eigen::MatrixXcd>(&buffer_in[0], in.rows(), in.cols()) = in;
 
-        if (plan.get() != NULL)
-            fftw_execute_dft((*plan), reinterpret_cast<fftw_complex*>(&buffer_in[0]), reinterpret_cast<fftw_complex*>(&buffer_out[0]));
-        else
-            return; //error throw?
+        if (plan) {
+            fftw_execute_dft(*plan, reinterpret_cast<fftw_complex *>(&buffer_in[0]), reinterpret_cast<fftw_complex *>(&buffer_out[0]));
+        } else {
+            plan = std::make_shared<fftw_plan>(fftw_plan_dft_2d(static_cast<int>(in.rows()), static_cast<int>(in.cols()), reinterpret_cast<fftw_complex*>(&buffer_in[0]), reinterpret_cast<fftw_complex*>(&buffer_out[0]), dir, FFTW_ESTIMATE));
+            fftw_execute(*plan);
+        }
 
         out = Eigen::Map<Eigen::MatrixXcd>(&buffer_out[0], in.rows(), in.cols());
+    }
+
+    static void doForwardFFT(std::shared_ptr<fftw_plan> plan, Eigen::MatrixXcd in, Eigen::MatrixXcd& out) {
+        doFFTPlan(plan, in, out, FFTW_FORWARD);
+    }
+
+    static void doBackwardFFT(std::shared_ptr<fftw_plan> plan, Eigen::MatrixXcd in, Eigen::MatrixXcd& out) {
+        doFFTPlan(plan, in, out, FFTW_BACKWARD);
     }
 
 }
