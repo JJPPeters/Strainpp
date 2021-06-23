@@ -8,6 +8,16 @@ GPA::GPA(Eigen::MatrixXcd img)
     _Image = std::make_shared<Eigen::MatrixXcd>(img);
     _FFT = std::make_shared<Eigen::MatrixXcd>(Eigen::MatrixXcd(_Image->rows(), _Image->cols()));
 
+    // I think I had an error when using NULL before as technically they are the same and FFTW tries to optimise
+    // for in-place FFTs..., These are just temporary to avoid that
+    fftw_complex* temp_1;
+    fftw_complex* temp_2;
+
+    _FFTplan = std::make_shared<fftw_plan>(fftw_plan_dft_2d(static_cast<int>(_Image->rows()),
+                                                                static_cast<int>(_Image->cols()), temp_1, temp_2, FFTW_FORWARD, FFTW_ESTIMATE));
+    _IFFTplan = std::make_shared<fftw_plan>(fftw_plan_dft_2d(static_cast<int>(_Image->rows()),
+                                                                 static_cast<int>(_Image->cols()), temp_1, temp_2, FFTW_BACKWARD, FFTW_ESTIMATE));
+
     // do the FFT now
     UtilsFFT::doForwardFFT(_FFTplan, UtilsFFT::preFFTShift(*_Image), *_FFT);
 }
