@@ -15,10 +15,10 @@ Phase::Phase(std::shared_ptr<Eigen::MatrixXcd> inputFFT, double gx, double gy, d
     _IFFTplan = std::move(inversePlan);
     _FFTplan = std::move(forwardPlan);
 
-    _FFTdiffplan = std::make_shared<fftw_plan>(fftw_plan_dft_2d(static_cast<int>(_FFT->rows() + 2),
-                                                                static_cast<int>(_FFT->cols() + 2), NULL, NULL, FFTW_FORWARD, FFTW_ESTIMATE));
-    _IFFTdiffplan = std::make_shared<fftw_plan>(fftw_plan_dft_2d(static_cast<int>(_FFT->rows() + 2),
-                                                                 static_cast<int>(_FFT->cols() + 2), NULL, NULL, FFTW_BACKWARD, FFTW_ESTIMATE));
+//    _FFTdiffplan = std::make_shared<fftw_plan>(fftw_plan_dft_2d(static_cast<int>(_FFT->rows() + 2),
+//                                                                static_cast<int>(_FFT->cols() + 2), NULL, NULL, FFTW_FORWARD, FFTW_ESTIMATE));
+//    _IFFTdiffplan = std::make_shared<fftw_plan>(fftw_plan_dft_2d(static_cast<int>(_FFT->rows() + 2),
+//                                                                 static_cast<int>(_FFT->cols() + 2), NULL, NULL, FFTW_BACKWARD, FFTW_ESTIMATE));
 
 }
 
@@ -152,18 +152,18 @@ void Phase::getDifferential(Eigen::MatrixXcd &dx, Eigen::MatrixXcd &dy)
         for (int j = 0; j < _NormPhase.cols(); ++j)
             expPhase(i, j) = std::exp(im * _NormPhase(i, j));
 
-    #pragma omp parallel
-    {
-    #pragma omp single
-        {
-        #pragma omp task
+//    #pragma omp parallel
+//    {
+//    #pragma omp single
+//        {
+//        #pragma omp task
             UtilsFFT::doForwardFFT(_FFTdiffplan, expPhase, phaseTemp);
-        #pragma omp task
+//        #pragma omp task
             UtilsFFT::doForwardFFT(_FFTdiffplan, dx_kernel, xTemp);
-        #pragma omp task
+//        #pragma omp task
             UtilsFFT::doForwardFFT(_FFTdiffplan, dy_kernel, yTemp);
-        }
-    }
+//        }
+//    }
 
     // do convolution
     #pragma omp parallel for
@@ -173,16 +173,16 @@ void Phase::getDifferential(Eigen::MatrixXcd &dx, Eigen::MatrixXcd &dy)
         yTemp(i) = yTemp(i) * phaseTemp(i);
     }
 
-    #pragma omp parallel
-    {
-    #pragma omp single
-        {
-        #pragma omp task
+//    #pragma omp parallel
+//    {
+//    #pragma omp single
+//        {
+//        #pragma omp task
             UtilsFFT::doBackwardFFT(_IFFTdiffplan, xTemp, dx_kernel);
-        #pragma omp task
+//        #pragma omp task
             UtilsFFT::doBackwardFFT(_IFFTdiffplan, yTemp, dy_kernel);
-        }
-    }
+//        }
+//    }
 
     // for normalising IFFT
     double nn = (_FFT->rows()+2)*(_FFT->cols()+2);
