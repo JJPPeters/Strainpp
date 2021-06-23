@@ -15,8 +15,8 @@ Phase::Phase(std::shared_ptr<Eigen::MatrixXcd> inputFFT, double gx, double gy, d
     _FFTplan = std::move(forwardPlan);
     _IFFTplan = std::move(inversePlan);
 
-    fftw_complex* temp_1;
-    fftw_complex* temp_2;
+    fftw_complex temp_1 [1] = {};
+    fftw_complex temp_2 [1] = {};
 
     _FFTdiffplan = std::make_shared<fftw_plan>(fftw_plan_dft_2d(static_cast<int>(_FFT->rows() + 2),
                                                                 static_cast<int>(_FFT->cols() + 2), temp_1, temp_2, FFTW_FORWARD, FFTW_ESTIMATE));

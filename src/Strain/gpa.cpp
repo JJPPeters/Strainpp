@@ -10,8 +10,9 @@ GPA::GPA(Eigen::MatrixXcd img)
 
     // I think I had an error when using NULL before as technically they are the same and FFTW tries to optimise
     // for in-place FFTs..., These are just temporary to avoid that
-    fftw_complex* temp_1;
-    fftw_complex* temp_2;
+    // can't just make pointer as it gets compiled out in release builds?
+    fftw_complex temp_1 [1] = {};
+    fftw_complex temp_2 [1] = {};
 
     _FFTplan = std::make_shared<fftw_plan>(fftw_plan_dft_2d(static_cast<int>(_Image->rows()),
                                                                 static_cast<int>(_Image->cols()), temp_1, temp_2, FFTW_FORWARD, FFTW_ESTIMATE));
