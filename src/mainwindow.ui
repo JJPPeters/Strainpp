@@ -304,7 +304,7 @@
                   </font>
                  </property>
                  <property name="autoFillBackground">
-                  <bool>true</bool>
+                  <bool>false</bool>
                  </property>
                  <property name="styleSheet">
                   <string notr="true">padding : 5 4 4 5</string>
@@ -352,7 +352,7 @@
                   </font>
                  </property>
                  <property name="autoFillBackground">
-                  <bool>true</bool>
+                  <bool>false</bool>
                  </property>
                  <property name="styleSheet">
                   <string notr="true">padding : 5 4 4 5</string>
@@ -418,7 +418,7 @@
                   </font>
                  </property>
                  <property name="autoFillBackground">
-                  <bool>true</bool>
+                  <bool>false</bool>
                  </property>
                  <property name="styleSheet">
                   <string notr="true">padding : 5 4 4 5</string>
@@ -469,7 +469,7 @@
                   </font>
                  </property>
                  <property name="autoFillBackground">
-                  <bool>true</bool>
+                  <bool>false</bool>
                  </property>
                  <property name="styleSheet">
                   <string notr="true">padding : 5 4 4 5</string>
@@ -661,7 +661,7 @@
      <x>0</x>
      <y>0</y>
      <width>846</width>
-     <height>19</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -717,6 +717,7 @@
      <string>Options</string>
     </property>
     <addaction name="actionMinimal_dialogs"/>
+    <addaction name="actionReuse_gs"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuStrain"/>
@@ -824,6 +825,14 @@
    </property>
    <property name="text">
     <string>Minimal dialogs</string>
+   </property>
+  </action>
+  <action name="actionReuse_gs">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Allow g-vector reuse</string>
    </property>
   </action>
  </widget>

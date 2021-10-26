@@ -41,6 +41,8 @@ private slots:
 
     void clickBraggSpot(QMouseEvent *event);
 
+    void processBraggClick(double x, double y);
+
     void clickRectCorner(QMouseEvent *event);
 
     void on_actionGPA_triggered();
@@ -48,6 +50,8 @@ private slots:
     void on_actionHann_triggered();
 
     void on_actionMinimal_dialogs_triggered();
+
+    void on_actionReuse_gs_triggered();
 
     void on_leftCombo_currentIndexChanged(int index);
 
@@ -75,7 +79,7 @@ private slots:
 private:
     Ui::MainWindow *ui;
 
-    bool minimalDialogs;
+    bool minimalDialogs, reuseGs;
 
     Eigen::MatrixXcd original_image;
 
@@ -90,6 +94,8 @@ private:
     int phaseSelection;
 
     double lastAngle;
+    //
+    std::vector<double> lastG1, lastG2;
 
     double minGrad, _sig;
 

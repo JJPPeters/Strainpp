@@ -11,6 +11,9 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+    lastG1 = std::vector<double>();
+    lastG2 = std::vector<double>();
+
     QCoreApplication::setOrganizationName("PetersSoft");
     QCoreApplication::setApplicationName("Strain++");
 
@@ -20,12 +23,14 @@ MainWindow::MainWindow(QWidget *parent) :
     if (!settings.contains("dialog/currentSavePath"))
         settings.setValue("dialog/currentSavePath", QStandardPaths::HomeLocation);
     minimalDialogs = settings.contains("dialog/minimal") && settings.value("dialog/minimal").toBool();
+    reuseGs = settings.contains("dialog/reuseGs") && settings.value("dialog/reuseGs").toBool();
 
     ui->setupUi(this);
 
     setWindowTitle("Strain++");
 
     ui->actionMinimal_dialogs->setChecked(minimalDialogs);
+    ui->actionReuse_gs->setChecked(reuseGs);
 
     // add label to  status bar (can't be done with designer)
     statusLabel = new QLabel("--");
@@ -313,19 +318,34 @@ void MainWindow::AcceptGVector()
         }
         else
         {
+            // we are happy with our mask size
             happy = true;
+            // we will be selecting our first G-vector
             phaseSelection = 0;
-            updateStatusBar("Select a g-vector on the FFT");
-            if (!minimalDialogs)
-                QMessageBox::information(this, tr("GPA"), tr("Select a g-vector on the FFT"), QMessageBox::Ok);
 
-            connect(ui->fftPlot, SIGNAL(mousePress(QMouseEvent*)), this, SLOT(clickBraggSpot(QMouseEvent*)));
+            // check if we want to reuse out first G-vector!
+            bool reused_g = false;
+            if (lastG1.size() == 2 && reuseGs) {
+                auto ret = QMessageBox::information(this, tr("GPA"), tr("Reuse first G-vector?"), QMessageBox::Yes | QMessageBox::No);
+
+                if (ret == QMessageBox::Yes) {
+                    processBraggClick(lastG1[0], lastG1[1]);
+                    reused_g = true; // we have reused it!
+                }
+            }
+
+            if (!reused_g) { // because we have not reused a G-vector, need to get one
+                updateStatusBar("Select a g-vector on the FFT");
+                if (!minimalDialogs)
+                    QMessageBox::information(this, tr("GPA"), tr("Select a g-vector on the FFT"), QMessageBox::Ok);
+
+                connect(ui->fftPlot, SIGNAL(mousePress(QMouseEvent * )), this, SLOT(clickBraggSpot(QMouseEvent * )));
+            }
         }
     }
 }
 
-void MainWindow::clickGVector(QMouseEvent *event)
-{
+void MainWindow::clickGVector(QMouseEvent *event) {
 
     double x = ui->fftPlot->xAxis->pixelToCoord(event->pos().x());
     double y = ui->fftPlot->yAxis->pixelToCoord(event->pos().y());
@@ -345,18 +365,21 @@ void MainWindow::clickGVector(QMouseEvent *event)
     AcceptGVector();
 }
 
-void MainWindow::clickBraggSpot(QMouseEvent *event)
-{
+void MainWindow::clickBraggSpot(QMouseEvent *event) {
     // get coords of click
     double x = ui->fftPlot->xAxis->pixelToCoord(event->pos().x());
     double y = ui->fftPlot->yAxis->pixelToCoord(event->pos().y());
-    
-    if(!ui->fftPlot->inAxis(x, y))
+
+    if (!ui->fftPlot->inAxis(x, y))
         return;
 
     disconnect(ui->fftPlot, SIGNAL(mousePress(QMouseEvent*)), nullptr, nullptr);
     updateStatusBar("--");
 
+    processBraggClick(x, y);
+}
+
+void MainWindow::processBraggClick(double x, double y) {
     // calculate optimal sigma [REF]
     _sig = minGrad/(2*3);
 
@@ -371,6 +394,13 @@ void MainWindow::clickBraggSpot(QMouseEvent *event)
     ui->fftPlot->DrawCircle(x, y, phaseCol, QBrush(Qt::NoBrush), 3*_sig); // assume here that 3sigma is the ask radius.
 
     GPAstrain->calculatePhase(phaseSelection, x, y, _sig);
+
+    // save these so we could use them later
+    if (phaseSelection == 0) {
+        lastG1 = {x, y};
+    } else if (phaseSelection == 1) {
+        lastG2 = {x, y};
+    }
 
     Eigen::MatrixXd ph = GPAstrain->getPhase(phaseSelection)->getWrappedPhase();
 
@@ -395,7 +425,6 @@ void MainWindow::clickBraggSpot(QMouseEvent *event)
 
 void MainWindow::continuePhase()
 {
-
     // reset the image
     try
     {
@@ -407,13 +436,26 @@ void MainWindow::continuePhase()
         return;
     }
 
-    if (phaseSelection  == 0)
+    if (phaseSelection == 0)
     { // if this is the first phase, select another.
         ++phaseSelection;
-        updateStatusBar("Select another g-vector on the FFT");
-        if (!minimalDialogs)
-            QMessageBox::information(this, tr("GPA"), tr("Select another g-vector on the FFT"), QMessageBox::Ok);
-        connect(ui->fftPlot, SIGNAL(mousePress(QMouseEvent*)), this, SLOT(clickBraggSpot(QMouseEvent*)));
+
+        bool reused_g = false;
+        if (lastG2.size() == 2 && reuseGs) {
+            auto ret = QMessageBox::information(this, tr("GPA"), tr("Reuse second G-vector?"), QMessageBox::Yes | QMessageBox::No);
+
+            if (ret == QMessageBox::Yes) {
+                processBraggClick(lastG2[0], lastG2[1]);
+                reused_g = true; // we have reused it!
+            }
+        }
+
+        if (!reused_g) {
+            updateStatusBar("Select another g-vector on the FFT");
+            if (!minimalDialogs)
+                QMessageBox::information(this, tr("GPA"), tr("Select another g-vector on the FFT"), QMessageBox::Ok);
+            connect(ui->fftPlot, SIGNAL(mousePress(QMouseEvent * )), this, SLOT(clickBraggSpot(QMouseEvent * )));
+        }
     }
     else
     {
@@ -688,6 +730,13 @@ void MainWindow::on_actionMinimal_dialogs_triggered()
     minimalDialogs = ui->actionMinimal_dialogs->isChecked();
     QSettings settings;
     settings.setValue("dialog/minimal", minimalDialogs);
+}
+
+void MainWindow::on_actionReuse_gs_triggered()
+{
+    reuseGs = ui->actionReuse_gs->isChecked();
+    QSettings settings;
+    settings.setValue("dialog/reuseGs", reuseGs);
 }
 
 void MainWindow::on_actionHann_triggered()
