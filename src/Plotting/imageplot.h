@@ -352,22 +352,26 @@ private:
     }
 
 public slots:
-    void SetColorLimits(double ul)
+    void SetColorLimits(double ul, bool rePlot)
     {
         if (!haveImage)
             return;
 
         QCPRange lims(-ul, ul);
         ImageObject->setDataRange(lims);
-        replot();
+
+        if (rePlot)
+            replot();
     }
 
-    void SetColorMap(QCPColorGradient Map)
+    void SetColorMap(QCPColorGradient Map, bool rePlot)
     {
         if (!haveImage)
             return;
         ImageObject->setGradient(Map);
-        replot();
+
+        if (rePlot)
+            replot();
     }
 
     void ExportSelector(QString directory, QString filename, int choice)

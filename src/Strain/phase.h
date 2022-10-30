@@ -41,6 +41,11 @@ public:
 
     Phase(std::shared_ptr<Eigen::MatrixXcd> inputFFT, double gx, double gy, double sigma, std::shared_ptr<fftw_plan> forwardPlan, std::shared_ptr<fftw_plan> inversePlan);
 
+    void updateFFT(std::shared_ptr<Eigen::MatrixXcd> inputFFT)
+    {
+        _FFT = inputFFT;
+    }
+
     Eigen::MatrixXd getGaussianMask();
 
     Eigen::MatrixXcd getMaskedFFT();

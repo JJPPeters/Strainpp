@@ -39,8 +39,8 @@ MainWindow::MainWindow(QWidget *parent) :
     statusLabel->setSizePolicy(QSizePolicy::MinimumExpanding,
                                QSizePolicy::MinimumExpanding);
 
-    ui->colorBar->SetColorMap(ui->colourMapBox->currentText());
-    ui->colorBar->SetLimits(ui->limitsSpin->value());
+    ui->colorBar->SetColorMap(ui->colourMapBox->currentText(), true);
+    ui->colorBar->SetLimits(ui->limitsSpin->value(), true);
 
     // this makes the background of the container of the color bar transparent
     ui->colorBar->setAttribute(Qt::WA_OpaquePaintEvent, false);
@@ -51,15 +51,15 @@ MainWindow::MainWindow(QWidget *parent) :
     on_angleSpin_editingFinished(); // this is just to update the axes image...
 
     // connect al the slots to update the strain images
-    connect(ui->colorBar, SIGNAL(limitsChanged(double)), ui->exxPlot, SLOT(SetColorLimits(double)));
-    connect(ui->colorBar, SIGNAL(limitsChanged(double)), ui->exyPlot, SLOT(SetColorLimits(double)));
-    connect(ui->colorBar, SIGNAL(limitsChanged(double)), ui->eyxPlot, SLOT(SetColorLimits(double)));
-    connect(ui->colorBar, SIGNAL(limitsChanged(double)), ui->eyyPlot, SLOT(SetColorLimits(double)));
+    connect(ui->colorBar, SIGNAL(limitsChanged(double, bool)), ui->exxPlot, SLOT(SetColorLimits(double, bool)));
+    connect(ui->colorBar, SIGNAL(limitsChanged(double, bool)), ui->exyPlot, SLOT(SetColorLimits(double, bool)));
+    connect(ui->colorBar, SIGNAL(limitsChanged(double, bool)), ui->eyxPlot, SLOT(SetColorLimits(double, bool)));
+    connect(ui->colorBar, SIGNAL(limitsChanged(double, bool)), ui->eyyPlot, SLOT(SetColorLimits(double, bool)));
 
-    connect(ui->colorBar, SIGNAL(mapChanged(QCPColorGradient)), ui->exxPlot, SLOT(SetColorMap(QCPColorGradient)));
-    connect(ui->colorBar, SIGNAL(mapChanged(QCPColorGradient)), ui->exyPlot, SLOT(SetColorMap(QCPColorGradient)));
-    connect(ui->colorBar, SIGNAL(mapChanged(QCPColorGradient)), ui->eyxPlot, SLOT(SetColorMap(QCPColorGradient)));
-    connect(ui->colorBar, SIGNAL(mapChanged(QCPColorGradient)), ui->eyyPlot, SLOT(SetColorMap(QCPColorGradient)));
+    connect(ui->colorBar, SIGNAL(mapChanged(QCPColorGradient, bool)), ui->exxPlot, SLOT(SetColorMap(QCPColorGradient, bool)));
+    connect(ui->colorBar, SIGNAL(mapChanged(QCPColorGradient, bool)), ui->exyPlot, SLOT(SetColorMap(QCPColorGradient, bool)));
+    connect(ui->colorBar, SIGNAL(mapChanged(QCPColorGradient, bool)), ui->eyxPlot, SLOT(SetColorMap(QCPColorGradient, bool)));
+    connect(ui->colorBar, SIGNAL(mapChanged(QCPColorGradient, bool)), ui->eyyPlot, SLOT(SetColorMap(QCPColorGradient, bool)));
 
     fftw_init_threads();
     fftw_plan_with_nthreads(omp_get_max_threads());
@@ -110,7 +110,6 @@ void MainWindow::on_actionOpen_triggered()
     if (temp_file.suffix() == "tif")
         openTIFF(fileName.toStdString());
 
-    // TODO: create GPA class here!
     showNewImageAndFFT(original_image);
 
     // clear plots of previous data
@@ -235,7 +234,7 @@ void MainWindow::showNewImageAndFFT(std::vector<Eigen::MatrixXcd> &image, unsign
     showImageAndFFT();
 }
 
-void MainWindow::showImageAndFFT()
+void MainWindow::showImageAndFFT(bool rePlot)
 {
     ui->imagePlot->clearImage(false);
     ui->fftPlot->clearImage(false);
@@ -243,7 +242,7 @@ void MainWindow::showImageAndFFT()
     // show real space image
     try
     {
-        ui->imagePlot->SetImage(*(GPAstrain->getImage()), ShowComplex::Real);
+        ui->imagePlot->SetImage(*(GPAstrain->getImage()), ShowComplex::Real, rePlot);
     }
     catch (const std::exception& e)
     {
@@ -254,7 +253,7 @@ void MainWindow::showImageAndFFT()
     // show reciprocal space image
     try
     {
-        ui->fftPlot->SetImage(*(GPAstrain->getFFT()), ShowComplex::PowerSpectrum);
+        ui->fftPlot->SetImage(*(GPAstrain->getFFT()), ShowComplex::PowerSpectrum, rePlot);
     }
     catch (const std::exception& e)
     {
@@ -625,11 +624,12 @@ void MainWindow::doRefinement(double top, double left, double bottom, double rig
 }
 
 // probably poorly named since it does so much more
-void MainWindow::getStrains()
+void MainWindow::getStrains(bool showTab, bool rePlot)
 {
     updateStatusBar("GPA completed!");
 
-    ui->tabWidget->setCurrentIndex(1);
+    if (showTab)
+        ui->tabWidget->setCurrentIndex(1);
 
     double angle = ui->angleSpin->value();
     std::string mode = ui->resultModeBox->currentText().toStdString();
@@ -662,14 +662,14 @@ void MainWindow::getStrains()
 
     double lim =  ui->colorBar->GetLimits().upper;
 
-    emit ui->colorBar->limitsChanged(lim);
+    emit ui->colorBar->limitsChanged(lim, rePlot);
 
     QCPColorGradient map = ui->colorBar->GetColorMap();
 
-    emit ui->colorBar->mapChanged(map);
+    emit ui->colorBar->mapChanged(map, rePlot);
 
-    updateOtherPlot(ui->leftCombo->currentIndex(), 0);
-    updateOtherPlot(ui->rightCombo->currentIndex(), 1);
+    updateOtherPlot(ui->leftCombo->currentIndex(), 0, rePlot);
+    updateOtherPlot(ui->rightCombo->currentIndex(), 1, rePlot);
 
     ui->menuExportAll->setEnabled(true);
     ui->menuExportStrains->setEnabled(true);
@@ -727,12 +727,12 @@ void MainWindow::updateOtherPlot(int index, int side, bool rePlot)
 void MainWindow::on_limitsSpin_editingFinished()
 {
     double lim = ui->limitsSpin->value();
-    ui->colorBar->SetLimits(lim);
+    ui->colorBar->SetLimits(lim, true);
 }
 
 void MainWindow::on_colourMapBox_currentIndexChanged(const QString &Map)
 {
-    ui->colorBar->SetColorMap(Map);
+    ui->colorBar->SetColorMap(Map, true);
 }
 
 void MainWindow::on_actionMinimal_dialogs_triggered()
@@ -773,50 +773,85 @@ void MainWindow::on_actionHann_triggered()
     ui->tabWidget->setCurrentIndex(0);
 }
 
-void MainWindow::ExportAll(int choice)
-{
-    if(!haveStrains)
+void MainWindow::ExportAll(int choice) {
+    if (!haveStrains)
         return;
 
     QSettings settings;
 
     // get path
-    QString fileDir = QFileDialog::getExistingDirectory(this, "Save directory", settings.value("dialog/currentSavePath").toString(), QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    QString fileDir = QFileDialog::getExistingDirectory(this, "Save directory",
+                                                        settings.value("dialog/currentSavePath").toString(),
+                                                        QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
 
     if (fileDir.isEmpty())
         return;
 
     settings.setValue("dialog/currentSavePath", fileDir);
 
-    ui->imagePlot->ExportSelector(fileDir, "image", choice);
-    ui->fftPlot->ExportSelector(fileDir, "FFT", choice);
+    auto reply = QMessageBox::No;
+    if (original_image.size() > 1)
+        reply = QMessageBox::question(this, tr("GPA"), tr("Export for all slices in stack?"), QMessageBox::No | QMessageBox::Yes);
+
+    if (reply == QMessageBox::Yes)
+    {
+        int nw = static_cast<int>(std::floor(std::log10(original_image.size()) + 1));
+
+        // here decide if stack is to be done
+        for (int i = 0; i < original_image.size(); ++i) {
+            GPAstrain->updateImage(original_image[i]);
+            showImageAndFFT(false);
+            getStrains(false, false);
+
+            ExportAllSlice(fileDir, choice, QString::number(i).rightJustified(nw, '0'), i == 0);
+        }
+
+        // reset the current image back to the original visible one
+        GPAstrain->updateImage(original_image[0]);
+        showImageAndFFT(true);
+        getStrains(false);
+    }
+    else
+    {
+        ExportAllSlice(fileDir, choice, "", true);
+    }
+
+}
+
+void MainWindow::ExportAllSlice(QString fileDir, int choice, QString prefix, bool do_colbar)
+{
+    if (!prefix.isEmpty())
+        prefix += " ";
+
+    ui->imagePlot->ExportSelector(fileDir, prefix + "image", choice);
+    ui->fftPlot->ExportSelector(fileDir, prefix + "FFT", choice);
 
     std::string mode = ui->resultModeBox->currentText().toStdString();
 
     if (mode == "Distortion")
     {
-        ui->exxPlot->ExportSelector(fileDir, "exx", choice);
-        ui->exyPlot->ExportSelector(fileDir, "exy", choice);
-        ui->eyxPlot->ExportSelector(fileDir, "eyx", choice);
-        ui->eyyPlot->ExportSelector(fileDir, "eyy", choice);
+        ui->exxPlot->ExportSelector(fileDir, prefix + "exx", choice);
+        ui->exyPlot->ExportSelector(fileDir, prefix + "exy", choice);
+        ui->eyxPlot->ExportSelector(fileDir, prefix + "eyx", choice);
+        ui->eyyPlot->ExportSelector(fileDir, prefix + "eyy", choice);
     }
     else if(mode == "Strain")
     {
-        ui->exxPlot->ExportSelector(fileDir, "epsxx", choice);
-        ui->exyPlot->ExportSelector(fileDir, "epsxy", choice);
-        ui->eyyPlot->ExportSelector(fileDir, "epsyy", choice);
+        ui->exxPlot->ExportSelector(fileDir, prefix + "epsxx", choice);
+        ui->exyPlot->ExportSelector(fileDir, prefix + "epsxy", choice);
+        ui->eyyPlot->ExportSelector(fileDir, prefix + "epsyy", choice);
     }
     else if(mode == "Rotation")
     {
-        ui->exyPlot->ExportSelector(fileDir, "wxy", choice);
-        ui->eyxPlot->ExportSelector(fileDir, "wyx", choice);
+        ui->exyPlot->ExportSelector(fileDir, prefix + "wxy", choice);
+        ui->eyxPlot->ExportSelector(fileDir, prefix + "wyx", choice);
     }
     else if(mode == "Dilitation")
     {
-        ui->exxPlot->ExportSelector(fileDir, "Dilitation", choice);
+        ui->exxPlot->ExportSelector(fileDir, prefix + "Dilitation", choice);
     }
 
-    if (choice == 0)
+    if (choice == 0 && do_colbar)
         ui->colorBar->ExportImage(fileDir, "ColourBar");
 
     // need to loop through and show images before exporting them from same plot
@@ -825,58 +860,93 @@ void MainWindow::ExportAll(int choice)
         updateOtherPlot(i, 0, false);
         updateOtherPlot(i, 1, false);
 
-        ui->leftOtherPlot->ExportSelector(fileDir, "Phase1 " + ui->leftCombo->itemText(i).remove("/"), choice);
-        ui->rightOtherPlot->ExportSelector(fileDir, "Phase2 " + ui->rightCombo->itemText(i).remove("/"), choice);
+        ui->leftOtherPlot->ExportSelector(fileDir, prefix + "Phase 1 " + ui->leftCombo->itemText(i).remove("/"), choice);
+        ui->rightOtherPlot->ExportSelector(fileDir, prefix + "Phase 2 " + ui->rightCombo->itemText(i).remove("/"), choice);
     }
     // If I don't clear first it makes the image distorted
-    ui->leftOtherPlot->clearImage();
-    ui->rightOtherPlot->clearImage();
-    updateOtherPlot(ui->leftCombo->currentIndex(), 0);
-    updateOtherPlot(ui->rightCombo->currentIndex(), 1);
+    //ui->leftOtherPlot->clearImage();
+    //ui->rightOtherPlot->clearImage();
+    //updateOtherPlot(ui->leftCombo->currentIndex(), 0);
+    //updateOtherPlot(ui->rightCombo->currentIndex(), 1);
 }
 
-void MainWindow::ExportStrains(int choice)
-{
-    if(!haveStrains)
+void MainWindow::ExportStrains(int choice) {
+    if (!haveStrains)
         return;
 
     QSettings settings;
 
     // get path
-    QString fileDir = QFileDialog::getExistingDirectory(this, "Save directory", settings.value("dialog/currentSavePath").toString(), QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    QString fileDir = QFileDialog::getExistingDirectory(this, "Save directory",
+                                                        settings.value("dialog/currentSavePath").toString(),
+                                                        QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
 
     if (fileDir.isEmpty())
         return;
 
     settings.setValue("dialog/currentSavePath", fileDir);
 
+    auto reply = QMessageBox::No;
+    if (original_image.size() > 1)
+        reply = QMessageBox::question(this, tr("GPA"), tr("Export for all slices in stack?"), QMessageBox::No | QMessageBox::Yes);
+
+
+    if (reply == QMessageBox::Yes)
+    {
+        int nw = static_cast<int>(std::floor(std::log10(original_image.size()) + 1));
+
+        // here decide if stack is to be done
+        for (int i = 0; i < original_image.size(); ++i) {
+            GPAstrain->updateImage(original_image[i]);
+            showImageAndFFT(false);
+            getStrains(false, false);
+
+            ExportStrainsSlice(fileDir, choice, QString::number(i).rightJustified(nw, '0'), i == 0);
+        }
+
+        // reset the current image back to the original visible one
+        GPAstrain->updateImage(original_image[0]);
+        showImageAndFFT(true);
+        getStrains(false);
+    }
+    else
+    {
+        ExportStrainsSlice(fileDir, choice, "", true);
+    }
+}
+
+void MainWindow::ExportStrainsSlice(QString fileDir, int choice, QString prefix, bool do_colbar)
+{
+    if (!prefix.isEmpty())
+        prefix += " ";
+
     std::string mode = ui->resultModeBox->currentText().toStdString();
 
     if (mode == "Distortion")
     {
-        ui->exxPlot->ExportSelector(fileDir, "exx", choice);
-        ui->exyPlot->ExportSelector(fileDir, "exy", choice);
-        ui->eyxPlot->ExportSelector(fileDir, "eyx", choice);
-        ui->eyyPlot->ExportSelector(fileDir, "eyy", choice);
+        ui->exxPlot->ExportSelector(fileDir, prefix + "exx", choice);
+        ui->exyPlot->ExportSelector(fileDir, prefix + "exy", choice);
+        ui->eyxPlot->ExportSelector(fileDir, prefix + "eyx", choice);
+        ui->eyyPlot->ExportSelector(fileDir, prefix + "eyy", choice);
     }
     else if(mode == "Strain")
     {
-        ui->exxPlot->ExportSelector(fileDir, "epsxx", choice);
-        ui->exyPlot->ExportSelector(fileDir, "epsxy", choice);
-        ui->eyxPlot->ExportSelector(fileDir, "epsyx", choice);
-        ui->eyyPlot->ExportSelector(fileDir, "epsyy", choice);
+        ui->exxPlot->ExportSelector(fileDir, prefix + "epsxx", choice);
+        ui->exyPlot->ExportSelector(fileDir, prefix + "epsxy", choice);
+        ui->eyxPlot->ExportSelector(fileDir, prefix + "epsyx", choice);
+        ui->eyyPlot->ExportSelector(fileDir, prefix + "epsyy", choice);
     }
     else if(mode == "Rotation")
     {
-        ui->exyPlot->ExportSelector(fileDir, "wxy", choice);
-        ui->eyxPlot->ExportSelector(fileDir, "wyx", choice);
+        ui->exyPlot->ExportSelector(fileDir, prefix + "wxy", choice);
+        ui->eyxPlot->ExportSelector(fileDir, prefix + "wyx", choice);
     }
     else if(mode == "Dilitation")
     {
-        ui->exxPlot->ExportSelector(fileDir, "Dilitation", choice);
+        ui->exxPlot->ExportSelector(fileDir, prefix + "Dilitation", choice);
     }
 
-    if (choice == 0)
+    if (choice == 0 && do_colbar)
         ui->colorBar->ExportImage(fileDir, "ColourBar");
 }
 

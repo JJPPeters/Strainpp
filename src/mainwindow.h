@@ -62,8 +62,10 @@ private slots:
     void on_colourMapBox_currentIndexChanged(const QString &Map);
 
     void ExportAll(int choice);
+    void ExportAllSlice(QString fileDir, int choice, QString prefix, bool do_colbar);
 
     void ExportStrains(int choice);
+    void ExportStrainsSlice(QString fileDir, int choice, QString prefix, bool do_colbar);
 
     void on_actionExportAllIm_triggered() {ExportAll(0);}
     void on_actionExportAllDat_triggered() {ExportAll(1);}
@@ -149,7 +151,7 @@ private:
 
     void showNewImageAndFFT(std::vector<Eigen::MatrixXcd> &image, unsigned int slice = 0);
 
-    void showImageAndFFT();
+    void showImageAndFFT(bool rePlot = true);
 
     void selectRefineArea();
 
@@ -157,7 +159,7 @@ private:
 
     void continuePhase();
 
-    void getStrains();
+    void getStrains(bool showTab = true, bool rePlot = true);
 
     void updateOtherPlot(int index, int side, bool rePlot = true);
 

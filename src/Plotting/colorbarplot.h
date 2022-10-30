@@ -8,8 +8,8 @@ class ColorBarPlot : public QCustomPlot
     Q_OBJECT
 signals:
     //todo add signals in here to connect to other plots
-    void mapChanged(QCPColorGradient map);
-    void limitsChanged(double limit);
+    void mapChanged(QCPColorGradient map, bool rePlot);
+    void limitsChanged(double limit, bool rePlot);
 
 public:
     ColorBarPlot(QWidget *parent = 0) : QCustomPlot(parent)
@@ -31,7 +31,7 @@ public:
         connect(this, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(contextMenuRequest(QPoint)));
     }
 
-    void SetColorMap(const QString &Map)
+    void SetColorMap(const QString &Map, bool rePlot)
     {
         if (Map == "Greyscale")
             ColorBar->setGradient(QCPColorGradient::gpGrayscale);
@@ -41,10 +41,13 @@ public:
             ColorBar->setGradient(QCPColorGradient::gpPolar);
         else if (Map == "BlOr")
             ColorBar->setGradient(BluOr_Map);
-        else if (Map == "Jet like")
+        else if (Map == "Turbo")
             ColorBar->setGradient(JetLike_Map);
-        replot();
-        emit mapChanged(GetColorMap());
+
+        if (rePlot)
+            replot();
+
+        emit mapChanged(GetColorMap(), rePlot);
     }
 
     QCPColorGradient GetColorMap()
@@ -52,12 +55,13 @@ public:
         return ColorBar->gradient();
     }
 
-    void SetLimits(double limit)
+    void SetLimits(double limit, bool rePlot)
     {
         ColorBar->setDataRange(QCPRange(-limit, limit));
 
-        replot();
-        emit limitsChanged(limit);
+        if (rePlot)
+            replot();
+        emit limitsChanged(limit, rePlot);
     }
 
     QCPRange GetLimits()
@@ -94,12 +98,15 @@ private:
 //        JetLike_Map.setColorStopAt(0.9, QColor(255, 79, 40));
 //        JetLike_Map.setColorStopAt(1.0, QColor(255, 0, 0));
 
-        JetLike_Map.setColorStopAt(0.0, QColor(127, 0, 255));
-        JetLike_Map.setColorStopAt(0.15, QColor(76, 79, 251));
-        JetLike_Map.setColorStopAt(0.4, QColor(76, 242, 206));
-        JetLike_Map.setColorStopAt(0.6, QColor(178, 242, 149));
-        JetLike_Map.setColorStopAt(0.85, QColor(255, 79, 40));
-        JetLike_Map.setColorStopAt(1.0, QColor(255, 0, 0));
+        JetLike_Map.setColorStopAt(0.0, QColor(51, 27, 61));
+        JetLike_Map.setColorStopAt(0.125, QColor(77, 110, 223));
+        JetLike_Map.setColorStopAt(0.25, QColor(61, 185, 233));
+        JetLike_Map.setColorStopAt(0.375, QColor(68, 238, 154));
+        JetLike_Map.setColorStopAt(0.5, QColor(164, 250, 80));
+        JetLike_Map.setColorStopAt(0.625, QColor(235, 206, 76));
+        JetLike_Map.setColorStopAt(0.75, QColor(247, 129, 55));
+        JetLike_Map.setColorStopAt(0.875, QColor(206, 58, 32));
+        JetLike_Map.setColorStopAt(1.0, QColor(119, 21, 19));
     }
 
 private slots:

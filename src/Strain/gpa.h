@@ -50,6 +50,12 @@ public:
 
         _Image = std::make_shared<Eigen::MatrixXcd>(img);
         UtilsFFT::doForwardFFT(_FFTplan, UtilsFFT::preFFTShift(*_Image), *_FFT);
+
+        _Phases[0]->updateFFT(_FFT);
+        _Phases[1]->updateFFT(_FFT);
+
+        _Phases[0]->getWrappedPhase();
+        _Phases[1]->getWrappedPhase();
     }
 
     std::shared_ptr<Eigen::MatrixXcd> getImage();
@@ -64,7 +70,7 @@ public:
 
     std::shared_ptr<Eigen::MatrixXd> getEyy();
 
-    setDoHann(bool set)
+    void setDoHann(bool set)
     {
         _Do_Hann = set;
     }
