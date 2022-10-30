@@ -95,25 +95,25 @@ namespace UtilsMaths {
     }
 
     template <typename T>
-    static Eigen::MatrixXT<T> HannWindow(const Eigen::MatrixXT<T> &input)
+    static std::shared_ptr<Eigen::MatrixXT<T>> HannWindow(const std::shared_ptr<Eigen::MatrixXT<T>> input)
     {
-        Eigen::MatrixXT<T> output(input.rows(), input.cols());
+        std::shared_ptr<Eigen::MatrixXT<T>> output = std::make_shared<Eigen::MatrixXT<T>>(input->rows(), input->cols());
 
-        std::vector<double> hann_y(input.rows());
-        std::vector<double> hann_x(input.cols());
-
-        #pragma omp parallel for
-        for(int i = 0; i < input.rows(); ++i)
-            hann_y[i] = 0.5 * (1 - std::cos( (2*PI*i) / (input.rows()-1) ));
+        std::vector<double> hann_y(input->rows());
+        std::vector<double> hann_x(input->cols());
 
         #pragma omp parallel for
-        for(int i = 0; i < input.cols(); ++i)
-            hann_x[i] = 0.5 * (1 - std::cos( (2*PI*i) / (input.cols()-1) ));
+        for(int i = 0; i < input->rows(); ++i)
+            hann_y[i] = 0.5 * (1 - std::cos( (2*PI*i) / (input->rows()-1) ));
 
         #pragma omp parallel for
-        for(int i = 0; i < input.rows(); ++i)
-            for(int j = 0; j < input.cols(); ++j)
-                output(i, j) = input(i, j) * hann_y[i] * hann_x[j];
+        for(int i = 0; i < input->cols(); ++i)
+            hann_x[i] = 0.5 * (1 - std::cos( (2*PI*i) / (input->cols()-1) ));
+
+        #pragma omp parallel for
+        for(int i = 0; i < input->rows(); ++i)
+            for(int j = 0; j < input->cols(); ++j)
+                output->coeffRef(i, j) = input->coeff(i, j) * hann_y[i] * hann_x[j];
 
         return output;
     }

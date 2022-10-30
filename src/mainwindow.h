@@ -81,7 +81,7 @@ private:
 
     bool minimalDialogs, reuseGs;
 
-    Eigen::MatrixXcd original_image;
+    std::vector<Eigen::MatrixXcd> original_image;
 
     std::unique_ptr<GPA> GPAstrain;
 
@@ -120,7 +120,7 @@ private:
         TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &imagelength);
         scanline = TIFFScanlineSize(tif);
         buf = _TIFFmalloc(scanline);
-        Eigen::MatrixXcd complexImage(imagelength, scanline/sizeof(T));
+        std::vector<Eigen::MatrixXcd> complexImage = {Eigen::MatrixXcd(imagelength, scanline/sizeof(T))};
 
         // image too small to differentiate
         if (imagelength < 3 || scanline/sizeof(T) < 3)
@@ -135,18 +135,21 @@ private:
             for (uint32 col = 0; col < scanline; ++col) // remember this is in bytes
             {
                 T* data = (T*)buf;
-                complexImage(row, col/sizeof(T)) = static_cast<double>(data[col/sizeof(T)]);
+                complexImage[0](row, col/sizeof(T)) = static_cast<double>(data[col/sizeof(T)]);
             }
         }
 
         _TIFFfree(buf);
-        original_image = complexImage.colwise().reverse();
-        showImageAndFFT(original_image);
+
+        complexImage[0] = complexImage[0].colwise().reverse().eval();
+        original_image = complexImage;
     }
 
     void openDM(std::string filename);
 
-    void showImageAndFFT(Eigen::MatrixXcd &image);
+    void showNewImageAndFFT(std::vector<Eigen::MatrixXcd> &image, unsigned int slice = 0);
+
+    void showImageAndFFT();
 
     void selectRefineArea();
 

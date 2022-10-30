@@ -29,6 +29,8 @@ const double PI = 3.14159265358979323846;
 class GPA
 {
 private:
+    bool _Do_Hann;
+
     std::shared_ptr<Eigen::MatrixXcd> _Image, _FFT;
     
     std::shared_ptr<Eigen::MatrixXd> _Exx, _Exy, _Eyx, _Eyy;
@@ -61,6 +63,11 @@ public:
     std::shared_ptr<Eigen::MatrixXd> getEyx();
 
     std::shared_ptr<Eigen::MatrixXd> getEyy();
+
+    setDoHann(bool set)
+    {
+        _Do_Hann = set;
+    }
 
     int getGVectors();
 

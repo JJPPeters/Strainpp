@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 
 #include "dmreader.h"
+#include "utils.h"
 
 //#include <QPainter>
 #include <QtSvg/QSvgRenderer>
@@ -109,6 +110,9 @@ void MainWindow::on_actionOpen_triggered()
     if (temp_file.suffix() == "tif")
         openTIFF(fileName.toStdString());
 
+    // TODO: create GPA class here!
+    showNewImageAndFFT(original_image);
+
     // clear plots of previous data
     ui->actionHann->setChecked(false);
     ui->menuExportAll->setEnabled(false);
@@ -133,29 +137,30 @@ void MainWindow::openDM(std::string filename)
         return;
     }
 
-    std::vector<double> image;
-    if ( nz > 1)
-        image = dmFile.getImage(0, nx*ny);
-    else
-        image = dmFile.getImage();
+    std::vector<double> image = dmFile.getImage();
+//    if ( nz > 1)
+//        image = dmFile.getImage(0, nx*ny);
+//    else
+//        image = dmFile.getImage();
+
 
     dmFile.close();
 
     // image is complex for FFTing later
-    Eigen::MatrixXcd complexImage(ny, nx);
+    std::vector<Eigen::MatrixXcd> complexImage(nz, Eigen::MatrixXcd(ny, nx));
 
     #pragma omp parallel for
-    for (int i = 0; i < complexImage.size(); ++i)
-        complexImage(i) = image[i];
+    for (int k = 0; k < nz; ++k ) {
+        for (int i = 0; i < nx * ny; ++i)
+            complexImage[k](i) = image[k * (nx * ny) + i];
 
-    complexImage = complexImage.colwise().reverse().eval();
+        complexImage[k] = complexImage[k].colwise().reverse().eval();
+    }
 
     image.clear();
 
     // set original image so we may reset to it later
     original_image = complexImage;
-
-    showImageAndFFT(complexImage);
 }
 
 void MainWindow::openTIFF(std::string filename)
@@ -223,12 +228,17 @@ void MainWindow::openTIFF(std::string filename)
     TIFFClose(tif);
 }
 
-void MainWindow::showImageAndFFT(Eigen::MatrixXcd &image)
+void MainWindow::showNewImageAndFFT(std::vector<Eigen::MatrixXcd> &image, unsigned int slice)
+{
+    GPAstrain = std::make_unique<GPA>(GPA(image[slice]));
+
+    showImageAndFFT();
+}
+
+void MainWindow::showImageAndFFT()
 {
     ui->imagePlot->clearImage(false);
     ui->fftPlot->clearImage(false);
-
-    GPAstrain = std::make_unique<GPA>(GPA(image));
 
     // show real space image
     try
@@ -757,14 +767,9 @@ void MainWindow::on_actionHann_triggered()
     DisconnectAll();
     ClearImages();
 
-    Eigen::MatrixXcd image;
+    GPAstrain->setDoHann(ui->actionHann->isChecked());
 
-    if (ui->actionHann->isChecked())
-        image = UtilsMaths::HannWindow(original_image);
-    else
-        image = original_image;
-
-    showImageAndFFT(image);
+    showImageAndFFT();
     ui->tabWidget->setCurrentIndex(0);
 }
 

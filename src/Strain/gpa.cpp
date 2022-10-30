@@ -8,6 +8,8 @@ GPA::GPA(Eigen::MatrixXcd img)
     _Image = std::make_shared<Eigen::MatrixXcd>(img);
     _FFT = std::make_shared<Eigen::MatrixXcd>(Eigen::MatrixXcd(_Image->rows(), _Image->cols()));
 
+    _Do_Hann = false;
+
     // I think I had an error when using NULL before as technically they are the same and FFTW tries to optimise
     // for in-place FFTs..., These are just temporary to avoid that
     // can't just make pointer as it gets compiled out in release builds?
@@ -25,7 +27,10 @@ GPA::GPA(Eigen::MatrixXcd img)
 
 std::shared_ptr<Eigen::MatrixXcd> GPA::getImage()
 {
-    return _Image;
+    if (_Do_Hann)
+        return UtilsMaths::HannWindow(_Image);
+    else
+        return _Image;
 }
 
 std::shared_ptr<Eigen::MatrixXcd> GPA::getFFT()
@@ -61,7 +66,7 @@ int GPA::getGVectors()
     //Eigen::MatrixXd _PS(ys, xs);
 
     Eigen::MatrixXcd _PS(ys, xs);
-    Eigen::MatrixXcd hanned = UtilsMaths::HannWindow(*_Image);
+    Eigen::MatrixXcd hanned = *UtilsMaths::HannWindow(_Image);
     UtilsFFT::doForwardFFT(_FFTplan, UtilsFFT::preFFTShift(hanned), _PS);
             //= UtilsMaths::HannWindow(original_image);;
 
