@@ -23,7 +23,19 @@ namespace DMRead
         DMReader(std::string filePath)
         {
             Reader.setStream(filePath);
+            BasicConstruct();
+        }
 
+#ifdef _WIN32
+        DMReader(std::wstring filePath)
+        {
+            Reader.setStream(filePath);
+            BasicConstruct();
+        }
+#endif
+
+        void BasicConstruct()
+        {
             version = Reader.ReadNumeric<uint32_t>();
 
             if (version == 3)

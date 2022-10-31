@@ -9,18 +9,23 @@
 #define EIGEN_INITIALIZE_MATRICES_BY_ZERO
 #endif
 
-#include <QMainWindow>
 #include <complex>
+#include <iostream>
+
+#include <QMainWindow>
 #include <QtWidgets/QLabel>
 #include <QMessageBox>
 
 #include "fftw3.h"
 #include "tiffio.h"
-
 #include <Eigen/Dense>
-#include "gpa.h"
-#include <iostream>
 
+#include "gpa.h"
+
+
+namespace DMRead {
+    class DMReader;
+}
 
 namespace Ui {
 class MainWindow;
@@ -106,7 +111,13 @@ private:
 
     void updateStatusBar(QString message);
 
+#ifdef _WIN32
+    bool openTIFF(std::wstring filename);
+#endif
+
     bool openTIFF(std::string filename);
+
+    bool openTIFFProper(TIFF* tif);
 
     void DisconnectAll();
 
@@ -147,7 +158,11 @@ private:
         original_image = complexImage;
     }
 
+#ifdef _WIN32
+    bool openDM(std::wstring filename);
+#endif
     bool openDM(std::string filename);
+    bool openDMProper(std::shared_ptr<DMRead::DMReader> dmFile);
 
     void showNewImageAndFFT(std::vector<Eigen::MatrixXcd> &image, unsigned int slice = 0);
 

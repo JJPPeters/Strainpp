@@ -1,12 +1,9 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#include <QtSvg/QSvgRenderer>
 #include "dmreader.h"
 #include "utils.h"
-
-//#include <QPainter>
-#include <QtSvg/QSvgRenderer>
-//#include <QPoint>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -107,9 +104,17 @@ void MainWindow::on_actionOpen_triggered()
     bool success = false;
     //QString ext = temp_file.suffix();
     if (temp_file.suffix() == "dm3" || temp_file.suffix() == "dm4")
+#ifdef _WIN32
+        success = openDM(fileName.toStdWString());
+#else
         success = openDM(fileName.toStdString());
+#endif
     if (temp_file.suffix() == "tif")
+#ifdef _WIN32
+        success = openTIFF(fileName.toStdWString());
+#else
         success = openTIFF(fileName.toStdString());
+#endif
 
     if (!success)
         return;
@@ -125,10 +130,10 @@ void MainWindow::on_actionOpen_triggered()
     ui->tabWidget->setCurrentIndex(0);
 }
 
-bool MainWindow::openDM(std::string filename)
+#ifdef _WIN32
+bool MainWindow::openDM(std::wstring filename)
 {
     std::shared_ptr<DMRead::DMReader> dmFile;
-
     try {
         dmFile = std::make_shared<DMRead::DMReader>(filename);
     } catch (const std::exception& e) {
@@ -136,6 +141,24 @@ bool MainWindow::openDM(std::string filename)
         return false;
     }
 
+    return openDMProper(dmFile);
+}
+#endif
+
+bool MainWindow::openDM(std::string filename)
+{
+    std::shared_ptr<DMRead::DMReader> dmFile;
+    try {
+        dmFile = std::make_shared<DMRead::DMReader>(filename);
+    } catch (const std::exception& e) {
+        QMessageBox::information(this, tr("File open"), tr(e.what()), QMessageBox::Ok);
+        return false;
+    }
+    return openDMProper(dmFile);
+}
+
+bool MainWindow::openDMProper(std::shared_ptr<DMRead::DMReader> dmFile)
+{
     // something to print tags?
     // dmFile->printTags();
 
@@ -186,11 +209,26 @@ bool MainWindow::openDM(std::string filename)
     return true;
 }
 
+#ifdef _WIN32
+bool MainWindow::openTIFF(std::wstring filename)
+{
+    TIFFSetWarningHandler(nullptr);
+    TIFF* tif = TIFFOpenW(filename.c_str(), "r");
+
+    return openTIFFProper(tif);
+}
+#endif
+
 bool MainWindow::openTIFF(std::string filename)
 {
     TIFFSetWarningHandler(nullptr);
     TIFF* tif = TIFFOpen(filename.c_str(), "r");
 
+    return openTIFFProper(tif);
+}
+
+bool MainWindow::openTIFFProper(TIFF* tif)
+{
     if (tif == nullptr)
     {
         QMessageBox::information(this, tr("File open"), tr("Error opening TIFF"), QMessageBox::Ok);

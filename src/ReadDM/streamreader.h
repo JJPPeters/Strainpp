@@ -21,6 +21,15 @@ namespace DMRead
             closeStream();
         }
 
+#ifdef _WIN32
+        void setStream(std::wstring filePath)
+        {
+            filePtr = _wfopen(filePath.c_str(), L"rb");
+            if(!filePtr)
+                throw std::runtime_error("DMReader: Cannot open file.");
+        }
+#endif
+
         void setStream(std::string filePath)
         {
             filePtr = fopen(filePath.c_str(), "rb");
