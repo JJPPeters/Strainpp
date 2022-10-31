@@ -8,7 +8,7 @@
 #include <vector>
 #include <fstream>
 #include <map>
-#include <time.h>
+#include <ctime>
 
 
 #include "tagreader.h"
@@ -41,6 +41,16 @@ namespace DMRead
         ~DMReader()
         {
             Reader.closeStream();
+        }
+
+        void printTags()
+        {
+            for (auto const &it : TagData)
+            {
+                std::cout << it.first << " " << std::endl;
+                if (it.first == "root.ImageList.1.Name")
+                    std::cout << std::get<0>(it.second) << std::endl;
+            }
         }
 
         float getScale()
@@ -86,6 +96,30 @@ namespace DMRead
             Reader.closeStream();
         }
 
+        bool isRGB() {
+            bool is_rgb = true;
+            try {
+                // RGB get set as int32, this tag is an easy identifier (also red and blue equivalent tags)
+                TSL rgb_tag = GetTag("root.Green Gain");
+            } catch(...) {
+                is_rgb = false;
+            }
+
+            return is_rgb;
+        }
+
+        bool isComplex() {
+            bool is_complex = true;
+            try {
+                // in complex, Data is split into 0 and 1 sub images (I assume real and imaginary)
+                TSL complex_tag = GetTag("root.ImageList.1.ImageData.Data.0");
+            } catch(...) {
+                is_complex = false;
+            }
+
+            return is_complex;
+        }
+
     private:
         const bool swapEndian = false;
 
@@ -128,11 +162,17 @@ namespace DMRead
             Reader.GoTo(data_position);
             switch(data_type)
             {
+                case int8:
+                    Output = (T)Reader.ReadNumeric<int8_t>(swapEndian);
+                    break;
                 case int16:
                     Output = (T)Reader.ReadNumeric<int16_t>(swapEndian);
                     break;
                 case int32:
                     Output = (T)Reader.ReadNumeric<int32_t>(swapEndian);
+                    break;
+                case uint8:
+                    Output = (T)Reader.ReadNumeric<uint8_t>(swapEndian);
                     break;
                 case uint16:
                     Output = (T)Reader.ReadNumeric<uint16_t>(swapEndian);
@@ -152,6 +192,9 @@ namespace DMRead
                 case uint64:
                     Output = (T)Reader.ReadNumeric<uint64_t>(swapEndian);
                     break;
+                default:
+                    throw std::runtime_error("Cannot read datatype");
+
             }
             return Output;
         }
@@ -159,6 +202,16 @@ namespace DMRead
         template <typename T>
         std::vector<T> ReadArray(std::string TagName, int offset = 0, int length = -1)
         {
+
+            // do this because RGB gives the same datatype as int32...
+            if (isRGB()) {
+                throw std::runtime_error("RGB images are not supported.");
+            }
+
+            if (isComplex()) {
+                throw std::runtime_error("Complex images are not supported.");
+            }
+
             TSL arrayTag = GetTag(TagName);
             int64_t data_type = std::get<0>(arrayTag);
             int64_t data_size = std::get<1>(arrayTag);
@@ -177,11 +230,17 @@ namespace DMRead
 
             switch(data_type)
             {
+                case int8:
+                    _ReadArray<T, int8_t>(output, data_type, data_position+offset, length);
+                    break;
                 case int16:
                     _ReadArray<T, int16_t>(output, data_type, data_position+offset, length);
                     break;
                 case int32:
                     _ReadArray<T, int32_t>(output, data_type, data_position+offset, length);
+                    break;
+                case uint8:
+                    _ReadArray<T, uint8_t>(output, data_type, data_position+offset, length);
                     break;
                 case uint16:
                     _ReadArray<T, uint16_t>(output, data_type, data_position+offset, length);
@@ -201,6 +260,8 @@ namespace DMRead
                 case uint64:
                     _ReadArray<T, uint64_t>(output, data_type, data_position+offset, length);
                     break;
+                default:
+                    throw std::runtime_error("Cannot open datatype");
             }
             return output;
         }

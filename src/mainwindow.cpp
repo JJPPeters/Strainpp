@@ -104,11 +104,15 @@ void MainWindow::on_actionOpen_triggered()
 
     settings.setValue("dialog/currentPath", temp_file.path());
 
+    bool success = false;
     //QString ext = temp_file.suffix();
     if (temp_file.suffix() == "dm3" || temp_file.suffix() == "dm4")
-        openDM(fileName.toStdString());
+        success = openDM(fileName.toStdString());
     if (temp_file.suffix() == "tif")
-        openTIFF(fileName.toStdString());
+        success = openTIFF(fileName.toStdString());
+
+    if (!success)
+        return;
 
     showNewImageAndFFT(original_image);
 
@@ -121,29 +125,48 @@ void MainWindow::on_actionOpen_triggered()
     ui->tabWidget->setCurrentIndex(0);
 }
 
-void MainWindow::openDM(std::string filename)
+bool MainWindow::openDM(std::string filename)
 {
-    DMRead::DMReader dmFile(std::move(filename));
+    std::shared_ptr<DMRead::DMReader> dmFile;
+
+    try {
+        dmFile = std::make_shared<DMRead::DMReader>(filename);
+    } catch (const std::exception& e) {
+        QMessageBox::information(this, tr("File open"), tr(e.what()), QMessageBox::Ok);
+        return false;
+    }
+
+    // something to print tags?
+    // dmFile->printTags();
+
+    // get image data first as this catches some errors in a more sensible way
+    // (e.g. binary images have no dimensions somehow....
+    std::vector<double> image;
+    try {
+        image = dmFile->getImage();
+    } catch (const std::exception& e) {
+        QMessageBox::information(this, tr("File open"), tr(e.what()), QMessageBox::Ok);
+        return false;
+    }
 
     // get important image info
-    int nx = dmFile.getX();
-    int ny = dmFile.getY();
-    int nz = dmFile.getZ();
+    int nx, ny, nz;
+    try {
+        nx = dmFile->getX();
+        ny = dmFile->getY();
+        nz = dmFile->getZ();
+    } catch (const std::exception& e) {
+        QMessageBox::information(this, tr("File open"), tr("Image dimensions not found."), QMessageBox::Ok);
+        return false;
+    }
 
     if (nx < 3 || ny < 3)
     {
         QMessageBox::information(this, tr("File open"), tr("Image too small."), QMessageBox::Ok);
-        return;
+        return false;
     }
 
-    std::vector<double> image = dmFile.getImage();
-//    if ( nz > 1)
-//        image = dmFile.getImage(0, nx*ny);
-//    else
-//        image = dmFile.getImage();
-
-
-    dmFile.close();
+    dmFile->close();
 
     // image is complex for FFTing later
     std::vector<Eigen::MatrixXcd> complexImage(nz, Eigen::MatrixXcd(ny, nx));
@@ -160,9 +183,10 @@ void MainWindow::openDM(std::string filename)
 
     // set original image so we may reset to it later
     original_image = complexImage;
+    return true;
 }
 
-void MainWindow::openTIFF(std::string filename)
+bool MainWindow::openTIFF(std::string filename)
 {
     TIFFSetWarningHandler(nullptr);
     TIFF* tif = TIFFOpen(filename.c_str(), "r");
@@ -170,7 +194,7 @@ void MainWindow::openTIFF(std::string filename)
     if (tif == nullptr)
     {
         QMessageBox::information(this, tr("File open"), tr("Error opening TIFF"), QMessageBox::Ok);
-        return;
+        return false;
     }
 
     // this is defaulting to 1 according to: https://www.awaresystems.be/imaging/tiff/tifftags/samplesperpixel.html
@@ -180,7 +204,7 @@ void MainWindow::openTIFF(std::string filename)
     if (samples != 1)
     {
         QMessageBox::information(this, tr("File open"), tr("TIFF must be greyscale"), QMessageBox::Ok);
-        return;
+        return false;
     }
 
     uint16 format = SAMPLEFORMAT_UINT;
@@ -221,10 +245,12 @@ void MainWindow::openTIFF(std::string filename)
     else
     {
         QMessageBox::information(this, tr("File open"), tr("Unsupported TIFF format"), QMessageBox::Ok);
-        return;
+        return false;
     }
 
     TIFFClose(tif);
+
+    return true;
 }
 
 void MainWindow::showNewImageAndFFT(std::vector<Eigen::MatrixXcd> &image, unsigned int slice)

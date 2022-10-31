@@ -106,7 +106,7 @@ private:
 
     void updateStatusBar(QString message);
 
-    void openTIFF(std::string filename);
+    bool openTIFF(std::string filename);
 
     void DisconnectAll();
 
@@ -147,7 +147,7 @@ private:
         original_image = complexImage;
     }
 
-    void openDM(std::string filename);
+    bool openDM(std::string filename);
 
     void showNewImageAndFFT(std::vector<Eigen::MatrixXcd> &image, unsigned int slice = 0);
 
