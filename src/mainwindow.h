@@ -126,35 +126,40 @@ private:
     template <typename T>
     void readTiffData(TIFF* tif)
     {
-        uint32 imagelength;
-        tsize_t scanline;
-        tdata_t buf;
+        int i = 0;
+        std::vector<Eigen::MatrixXcd> complexImage;
 
-        TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &imagelength);
-        scanline = TIFFScanlineSize(tif);
-        buf = _TIFFmalloc(scanline);
-        std::vector<Eigen::MatrixXcd> complexImage = {Eigen::MatrixXcd(imagelength, scanline/sizeof(T))};
+        do {
+            uint32 imagelength;
+            tsize_t scanline;
+            tdata_t buf;
 
-        // image too small to differentiate
-        if (imagelength < 3 || scanline/sizeof(T) < 3)
-        {
-            QMessageBox::information(this, tr("File open"), tr("Image too small."), QMessageBox::Ok);
-            return;
-        }
+            TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &imagelength);
+            scanline = TIFFScanlineSize(tif);
+            buf = _TIFFmalloc(scanline);
 
-        for (uint32 row = 0; row < imagelength; ++row)
-        {
-            TIFFReadScanline(tif, buf, row);
-            for (uint32 col = 0; col < scanline; ++col) // remember this is in bytes
-            {
-                T* data = (T*)buf;
-                complexImage[0](row, col/sizeof(T)) = static_cast<double>(data[col/sizeof(T)]);
+            complexImage.push_back(Eigen::MatrixXcd(imagelength, scanline / sizeof(T)));
+
+            // image too small to differentiate
+            if (imagelength < 3 || scanline / sizeof(T) < 3) {
+                QMessageBox::information(this, tr("File open"), tr("Image too small."), QMessageBox::Ok);
+                return;
             }
-        }
 
-        _TIFFfree(buf);
+            for (uint32 row = 0; row < imagelength; ++row) {
+                TIFFReadScanline(tif, buf, row);
+                for (uint32 col = 0; col < scanline; ++col) // remember this is in bytes
+                {
+                    T *data = (T *) buf;
+                    complexImage[i](row, col / sizeof(T)) = static_cast<double>(data[col / sizeof(T)]);
+                }
+            }
 
-        complexImage[0] = complexImage[0].colwise().reverse().eval();
+            _TIFFfree(buf);
+
+            complexImage[i] = complexImage[i].colwise().reverse().eval();
+            ++i;
+        } while (TIFFReadDirectory(tif));
         original_image = complexImage;
     }
 
