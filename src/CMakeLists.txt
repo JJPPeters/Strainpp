@@ -23,6 +23,16 @@ if(WIN32)
 	endif(CMAKE_COMPILER_IS_GNUCXX)
 endif(WIN32)
 
+# Add a custom command that produces version.cpp, plus
+# a dummy output that's not actually produced, in order
+# to force version.cmake to always be re-run before the build
+ADD_CUSTOM_COMMAND(
+		OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/version.cpp
+		${CMAKE_CURRENT_BINARY_DIR}/_version.cpp
+		COMMAND ${CMAKE_COMMAND} -P
+		${CMAKE_CURRENT_SOURCE_DIR}/version.cmake)
+#
+
 FIND_PACKAGE( OpenMP REQUIRED )
 if(OpenMP_FOUND)
     message(STATUS "Found OpenMP")
@@ -85,7 +95,8 @@ set ( Strainpp_SRCS
 	Strain/phase.cpp
 	Strain/gpa.cpp
 	Utils/exceptions.cpp
-	)
+	${CMAKE_CURRENT_BINARY_DIR}/version.cpp
+		versiondialog.cpp versiondialog.h)
 
 set ( Strainpp_UIS
 	mainwindow.ui

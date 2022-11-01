@@ -3,3 +3,4 @@ Makefile*
 tests
 cmake-build-*
 .idea
+version.cpp

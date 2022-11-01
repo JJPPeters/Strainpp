@@ -4,6 +4,7 @@
 #include <QtSvg/QSvgRenderer>
 #include "dmreader.h"
 #include "utils.h"
+#include "versiondialog.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -1154,4 +1155,8 @@ void MainWindow::on_resultModeBox_currentIndexChanged(const QString &mode)
         return;
 
     getStrains();
+}
+
+void MainWindow::on_actionAbout_triggered() {
+    show_version_dialog();
 }

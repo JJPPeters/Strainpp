@@ -54,6 +54,8 @@ private slots:
 
     void on_actionHann_triggered();
 
+    void on_actionAbout_triggered();
+
     void on_actionMinimal_dialogs_triggered();
 
     void on_actionReuse_gs_triggered();
