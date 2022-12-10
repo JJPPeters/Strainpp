@@ -31,6 +31,9 @@ ADD_CUSTOM_COMMAND(
 		${CMAKE_CURRENT_BINARY_DIR}/_version.cpp
 		COMMAND ${CMAKE_COMMAND} -P
 		${CMAKE_CURRENT_SOURCE_DIR}/version.cmake)
+
+# this is important as it will be used by the installer scripts
+configure_file(version.cpp version.cpp COPYONLY)
 #
 
 FIND_PACKAGE( OpenMP REQUIRED )
