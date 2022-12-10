@@ -117,7 +117,7 @@ def get_versions():
 
     with open(version_file, 'r') as file:
         for line in file:
-            mtch = re.findall(r'["]([\w\s]+)["]', line)
+            mtch = re.findall(r'["](.+)["]', line)
 
             if not mtch:
                 continue

@@ -1,3 +1,3 @@
 - release_1:
-  url: "https://github.com/JJPPeters/Strainpp/releases/download/v1.7.1/Install_Strain++_1.7.1.exe"
-  button_description: "v1.7.1 installer (Win x64)"
+  url: "https://github.com/JJPPeters/Strainpp/releases/latest/download/Install_Strain++.exe"
+  button_description: "Installer (Win x64)"
